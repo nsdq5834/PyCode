@@ -53,6 +53,18 @@ if not path.isdir(QbTpath) :
   print(QbTpath, ' is not a directory')
   exit()
 
+# Now we test to see if we can obtain the contents of the directories.			
+try:
+  SD = scandir(QbSpath)
+except OSError:
+  print('Unable to scan the directory', QbSpath)
+  exit()
+
+try:
+  TD = scandir(QbTpath)
+except OSError:
+  print('Unable to scan the directory', QbTpath)
+
 
 
 #Need to get pyAesCrypt so we can encrypt files prior to placing on cloud

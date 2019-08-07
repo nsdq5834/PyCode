@@ -8,6 +8,7 @@ are backing up our Quicken database.
 from os import *
 from io import *
 from shutil import *
+from stat import *
 
 QbSflag = False
 QbTflag = False
@@ -27,11 +28,11 @@ for lines in parmFile:
   myLines = lines.split("=",2)
   
   if myLines[0].strip() == "QbSrc" :
-    QbSource = myLines[1].strip()
+    QbSpath = myLines[1].strip()
     QbSflag = True
 	
   if myLines[0].strip() == "QbTgt" :
-    QbTarget = myLines[1].strip()
+    QbTpath = myLines[1].strip()
     QbTflag = True	
   
 parmFile.close()
@@ -42,8 +43,17 @@ if QbSflag == False or QbTflag == False :
   print('Parameter error in a parm file record.')
   exit()
 
-print(QbSource)
-print(QbTarget)
+# Check to make sure the directories exist.
+
+if not path.isdir(QbSpath) :
+  print(QbSpath, ' is not a directory')
+  exit()
+  
+if not path.isdir(QbTpath) :
+  print(QbTpath, ' is not a directory')
+  exit()
+
+
 
 #Need to get pyAesCrypt so we can encrypt files prior to placing on cloud
 #Grab it from pypi.org

@@ -9,9 +9,12 @@ from os import *
 from io import *
 from shutil import *
 from stat import *
+from filecmp import dircmp
 
 QbSflag = False
 QbTflag = False
+SDfiles = []
+TDfiles = []
 
 try:
     parmFile = open("CopyQB.parms","r",1)
@@ -53,17 +56,16 @@ if not path.isdir(QbTpath) :
   print(QbTpath, ' is not a directory')
   exit()
 
-# Now we test to see if we can obtain the contents of the directories.			
-try:
-  SD = scandir(QbSpath)
-except OSError:
-  print('Unable to scan the directory', QbSpath)
-  exit()
+# We are going to use the dircmp function from filecmp. This will do a
+# comparison of the source and target directories. From that we will use
+# the left_only property to obtain a list of files that are in the source
+# directory, but not in the target directory.
 
-try:
-  TD = scandir(QbTpath)
-except OSError:
-  print('Unable to scan the directory', QbTpath)
+filesNeedingBackup = dircmp(QbSpath,QbTpath).left_only
+
+for FNB in filesNeedingBackup :
+  print(FNB)
+
 
 
 

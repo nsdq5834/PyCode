@@ -11,6 +11,8 @@ from shutil import *
 from stat import *
 from filecmp import dircmp
 
+sourceFile = ''
+targetFile = ''
 QbSflag = False
 QbTflag = False
 SDfiles = []
@@ -61,10 +63,15 @@ if not path.isdir(QbTpath) :
 # the left_only property to obtain a list of files that are in the source
 # directory, but not in the target directory.
 
-filesNeedingBackup = dircmp(QbSpath,QbTpath).left_only
+filesNeedingBackup = dircmp(QbSpath,QbTpath,None,None).left_only
+
+# Now that we have the list of files we can iterate over them and back them
+# up using the copy2 method from shutil.
 
 for FNB in filesNeedingBackup :
-  print(FNB)
+  sourceFile = QbSpath + FNB
+  targetFile = QbTpath + FNB
+  copy2(sourceFile, targetFile)
 
 
 

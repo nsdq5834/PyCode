@@ -19,6 +19,7 @@ targetFile = ''
 QbSflag = False
 QbTflag = False
 QbPflag = False
+QbLflag = False
 SDfiles = []
 TDfiles = []
 kByte = 1024
@@ -54,13 +55,17 @@ for lines in parmFile:
 
   if myLines[0].strip() == "QbPwd" :
     QbPassword = myLines[1].strip()
-    QbPflag = True	
+    QbPflag = True
+
+  if myLines[0].strip() == "QbLfl" :
+    QblogFileLoc = myLines[1].strip()
+    QbLflag = True	
   
 parmFile.close()
 
 # Trivial test to make sure we have the three parameters we need.
 
-if QbSflag == False or QbTflag == False or QbPflag == False :
+if QbSflag == False or QbTflag == False or QbPflag == False or QbLflag == False :
   print('Parameter error in a parm file record.')
   exit()
 

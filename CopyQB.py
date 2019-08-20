@@ -10,6 +10,7 @@
 from os import *
 from io import open
 from filecmp import dircmp
+from datetime import datetime
 from pyAesCrypt import encryptFile
 
 # Define and initialize some variables we will use.
@@ -58,26 +59,42 @@ for lines in parmFile:
     QbPflag = True
 
   if myLines[0].strip() == "QbLfl" :
-    QblogFileLoc = myLines[1].strip()
+    QbLogFileLoc = myLines[1].strip()
     QbLflag = True	
   
 parmFile.close()
 
 # Trivial test to make sure we have the three parameters we need.
 
-if QbSflag == False or QbTflag == False or QbPflag == False or QbLflag == False :
+if (QbSflag == False or QbTflag == False or QbPflag == False
+  or QbLflag == False) :
   print('Parameter error in a parm file record.')
   exit()
+  
+# Next we need to construct a log file name and then open it for output.
+# Grab the current date and time
+
+rightNow = datetime.now()
+logFile = QbLogFileLoc + "CopyQB_" + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
+
+logHandle = open(logFile,"w+")
 
 # Check to make sure the directories exist.
 
 if not path.isdir(QbSpath) :
-  print(QbSpath, ' is not a directory')
+  errMsg = QbSpath + ' is not a directory, exiting routine'
+  logHandle.write(errMsg)
   exit()
   
 if not path.isdir(QbTpath) :
-  print(QbTpath, ' is not a directory')
+  errMsg = QbTpath + ' is not a directory, exiting routine'
+  logHandle.write(errMsg)
   exit()
+  
+txtMsg = 'Source and target directories are valid\n'
+logHandle.write(txtMsg)
+txtMsg = 'Obtaining list of files in source and not in target\n'
+logHandle.write(txtMsg)
 
 # We are going to use the dircmp function from filecmp. This will do a
 # comparison of the source and target directories. From that we will use
@@ -92,6 +109,14 @@ filesNeedingBackup = dircmp(QbSpath,QbTpath,None,None).left_only
 for FNB in filesNeedingBackup :
   sourceFile = QbSpath + FNB
   targetFile = QbTpath + FNB + '.aes'
-  encryptFile(sourceFile, targetFile, QbPassword, bufferSize)
+  try:
+    encryptFile(sourceFile, targetFile, QbPassword, bufferSize)
+  except OSError:
+    print("Error")
+  else:
+    txtMsg = sourceFile + ' has been copied to target directory\n'
+    logHandle.write(txtMsg)
   
+logHandle.close()
+
 exit()

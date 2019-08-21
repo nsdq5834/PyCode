@@ -1,5 +1,5 @@
 # CopyQB.py
-# Version 1.0
+# Version 1.1
 
 # This is a simple utility program to backup specific files, in this case we
 # are backing up our Quicken database. The backup copies are going to be 
@@ -9,9 +9,10 @@
 
 from os import *
 from io import open
+from shutil import copy2
 from filecmp import dircmp
 from datetime import datetime
-from pyAesCrypt import encryptFile
+#from pyAesCrypt import encryptFile
 
 # Define and initialize some variables we will use.
 
@@ -54,10 +55,6 @@ for lines in parmFile:
     QbTpath = myLines[1].strip()
     QbTflag = True
 
-  if myLines[0].strip() == "QbPwd" :
-    QbPassword = myLines[1].strip()
-    QbPflag = True
-
   if myLines[0].strip() == "QbLfl" :
     QbLogFileLoc = myLines[1].strip()
     QbLflag = True	
@@ -66,8 +63,7 @@ parmFile.close()
 
 # Trivial test to make sure we have the three parameters we need.
 
-if (QbSflag == False or QbTflag == False or QbPflag == False
-  or QbLflag == False) :
+if (QbSflag == False or QbTflag == False or QbLflag == False) :
   print('Parameter error in a parm file record.')
   exit()
   
@@ -108,9 +104,10 @@ filesNeedingBackup = dircmp(QbSpath,QbTpath,None,None).left_only
 
 for FNB in filesNeedingBackup :
   sourceFile = QbSpath + FNB
-  targetFile = QbTpath + FNB + '.aes'
+  targetFile = QbTpath + FNB
   try:
-    encryptFile(sourceFile, targetFile, QbPassword, bufferSize)
+    copy2(sourceFile, targetFile)
+    #encryptFile(sourceFile, targetFile, QbPassword, bufferSize)
   except OSError:
     print("Error")
   else:

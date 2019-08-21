@@ -78,17 +78,24 @@ logHandle = open(logFile,"w+")
 # Check to make sure the directories exist.
 
 if not path.isdir(QbSpath) :
-  errMsg = QbSpath + ' is not a directory, exiting routine'
+  errMsg = QbSpath + ' is not a directory, exiting routine\n'
   logHandle.write(errMsg)
   exit()
+else :
+  txtMsg = 'Source directory is ' + QbSpath + '\n'
+  logHandle.write(txtMsg)
   
 if not path.isdir(QbTpath) :
-  errMsg = QbTpath + ' is not a directory, exiting routine'
+  errMsg = QbTpath + ' is not a directory, exiting routine\n'
   logHandle.write(errMsg)
   exit()
+else :
+  txtMsg = 'Target directory is ' + QbTpath + '\n'
+  logHandle.write(txtMsg)
   
 txtMsg = 'Source and target directories are valid\n'
 logHandle.write(txtMsg)
+
 txtMsg = 'Obtaining list of files in source and not in target\n'
 logHandle.write(txtMsg)
 
@@ -100,20 +107,20 @@ logHandle.write(txtMsg)
 filesNeedingBackup = dircmp(QbSpath,QbTpath,None,None).left_only
 
 # Now that we have the list of files we can iterate over them and back them
-# up using the encryptFile method drom pyAesCrypt.
+# up using the copy2 method.
 
 for FNB in filesNeedingBackup :
   sourceFile = QbSpath + FNB
   targetFile = QbTpath + FNB
   try:
     copy2(sourceFile, targetFile)
-    #encryptFile(sourceFile, targetFile, QbPassword, bufferSize)
   except OSError:
     print("Error")
   else:
     txtMsg = sourceFile + ' has been copied to target directory\n'
     logHandle.write(txtMsg)
-  
+
+logHandle.write('Exiting program\n')  
 logHandle.close()
 
 exit()

@@ -1,9 +1,10 @@
-# CopyQB.py
-# Version 1.1
+# sfbkup.py
+# Version 1.0
 
-# This is a simple utility program to backup specific files, in this case we
-# are backing up our Quicken database. The backup copies are going to be 
-# encrypted.
+# Python program to create backups of files. The list of files to be backed
+# is specified in the sfbkup.parms file. This file contains a list of direc-
+# tories that will be scanned to build a list of the files that need to be
+# backed up.
 
 # Copy in needed support code
 
@@ -12,25 +13,48 @@ from io import open
 from shutil import copy2
 from filecmp import dircmp
 from datetime import datetime
-#from pyAesCrypt import encryptFile
+
+# open_the_logfile is a simple function that accepts two parameters and uses
+# them to create a unique name for a log file, and then opens the file. If we 
+# are able to open the file, the file descriptor or handle is passed back.
+# If we encounter an error we will exit the routine.
+
+def open_the_logfile(passedTuple) :
+
+  localList = list(passedTuple)	
+  LogFileLocation = localList[0]
+  LogFileNamePrefix = localList[1]  
+  
+  rightNow = datetime.now()
+  logFile = LogFileLocation + LogFileNamePrefix + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
+  
+  try:
+    LogFileDescriptor = open(logFile,"w+")
+  except PermissionError:
+    print('Access permission error')
+    exit()
+  except OSerror:
+    print('OS error encountered')
+    exit()
+  else:
+    return LogFileDescriptor
 
 # Define and initialize some variables we will use.
 
 sourceFile = ''
 targetFile = ''
+logHandle = ''
 QbSflag = False
-QbTflag = False
-QbPflag = False
 QbLflag = False
-SDfiles = []
-TDfiles = []
-kByte = 1024
-bufferSize = 64 * kByte
+sourceDirect = []
+targetDirect = []
+sourceFiles = []
+targetFiles = []
 
 # See if we can open the parameter file.
 
 try:
-    parmFile = open("CopyQB.parms","r",1)
+    parmFile = open("sfbkup.parms","r",1)
 except PermissionError:
     print('Access permission error')
     exit()
@@ -47,35 +71,57 @@ for lines in parmFile:
 
   myLines = lines.split("=",2)
   
-  if myLines[0].strip() == "QbSrc" :
+  if myLines[0].strip() == "BkSrc" :
     QbSpath = myLines[1].strip()
     QbSflag = True
-	
-  if myLines[0].strip() == "QbTgt" :
-    QbTpath = myLines[1].strip()
-    QbTflag = True
 
-  if myLines[0].strip() == "QbLfl" :
+  if myLines[0].strip() == "BkLfl" :
     QbLogFileLoc = myLines[1].strip()
     QbLflag = True	
   
 parmFile.close()
 
-# Trivial test to make sure we have the three parameters we need.
+# Trivial test to make sure we have the two parameters we need.
 
-if (QbSflag == False or QbTflag == False or QbLflag == False) :
+if (QbSflag == False or QbLflag == False) :
   print('Parameter error in a parm file record.')
   exit()
   
-# Next we need to construct a log file name and then open it for output.
-# Grab the current date and time
+# We have the location for the log file, so we will try to create it.
+# We will create a simple tuple to pass to the open_the_logfile routine.
+# If we have a log file go ahead and write a couple of messages to it.
 
-rightNow = datetime.now()
-logFile = QbLogFileLoc + "CopyQB_" + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
+myTuple = (QbLogFileLoc, "sfbkup_")
+logHandle = open_the_logfile(myTuple)
 
-logHandle = open(logFile,"w+")
+logHandle.write('Beginning program execution.\n')
+logHandle.write('Processing records from source file.\n') 
+ 
+"""
+try:
+    BkSrc = open(QbSpath,"r",1)
+except PermissionError:
+    print('Access permission error')
+    exit()
+except FileNotFoundError:
+    print('File does not exist or not found')
+    exit()
+else:
+    isReadable = BkSrc.readable()
+	
+for lines in BkSrc :
+  sourceDirect.append(lines.strip())
+  
+BkSrc.close()
 
-# Check to make sure the directories exist.
+# At this point sourceDirect contains the base list of directories that we will
+# examine for backup opportunities.
+
+for SD in sourceDirect :
+  xyz = scandir(SD)
+  for abc in xyz :
+    print(abc)
+"""
 
 if not path.isdir(QbSpath) :
   errMsg = QbSpath + ' is not a directory, exiting routine\n'

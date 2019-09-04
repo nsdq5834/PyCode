@@ -19,9 +19,9 @@ from datetime import datetime
 # are able to open the file, the file descriptor or handle is passed back.
 # If we encounter an error we will exit the routine.
 
-def open_the_logfile(passedTuple) :
+def open_the_logfile(otl_tuple) :
 
-  localList = list(passedTuple)	
+  localList = list(otl_tuple)	
   LogFileLocation = localList[0]
   LogFileNamePrefix = localList[1]  
   
@@ -38,6 +38,17 @@ def open_the_logfile(passedTuple) :
     exit()
   else:
     return LogFileDescriptor
+
+def write_to_logfile(wtl_tuple) :
+
+    fileDescriptor = wtl_tuple[0]
+    messageText = wtl_tuple[1]
+    rightNow = datetime.now()
+    timeStamp = rightNow.strftime("%Y%m%d_%H%M%S")
+    logMessage = timeStamp + ' ' + messageText
+    fileDescriptor.write(logMessage)
+
+    return True	
 
 # Define and initialize some variables we will use.
 
@@ -94,8 +105,10 @@ if (QbSflag == False or QbLflag == False) :
 myTuple = (QbLogFileLoc, "sfbkup_")
 logHandle = open_the_logfile(myTuple)
 
-logHandle.write('Beginning program execution.\n')
-logHandle.write('Processing records from source file.\n') 
+myTuple = (logHandle, 'Beginning program execution.\n')
+QbLflag = write_to_logfile(myTuple)
+myTuple = (logHandle, 'Processing records from source file.\n')
+QbLflag = write_to_logfile(myTuple)
  
 """
 try:
@@ -125,7 +138,8 @@ for SD in sourceDirect :
 
 if not path.isdir(QbSpath) :
   errMsg = QbSpath + ' is not a directory, exiting routine\n'
-  logHandle.write(errMsg)
+  myTuple = (logHandle, errMsg)
+  QbLflag = write_to_logfile(myTuple)
   exit()
 else :
   txtMsg = 'Source directory is ' + QbSpath + '\n'

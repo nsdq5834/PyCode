@@ -49,6 +49,15 @@ def write_to_logfile(wtl_tuple) :
     fileDescriptor.write(logMessage)
 
     return True	
+	
+def enum_directory(directory)
+
+    DirectoryContents = scandir(directory)
+	for EntryDescriptor in DirectoryContents :
+    print(abc)
+	
+	return True
+
 
 # Define and initialize some variables we will use.
 
@@ -110,7 +119,7 @@ QbLflag = write_to_logfile(myTuple)
 myTuple = (logHandle, 'Processing records from source file.\n')
 QbLflag = write_to_logfile(myTuple)
  
-"""
+
 try:
     BkSrc = open(QbSpath,"r",1)
 except PermissionError:
@@ -128,13 +137,15 @@ for lines in BkSrc :
 BkSrc.close()
 
 # At this point sourceDirect contains the base list of directories that we will
-# examine for backup opportunities.
+# examine for backup opportunities. This will be our main loop for building the
+# complete list of directories we will back up.
 
 for SD in sourceDirect :
+  print('SD = ', SD)
   xyz = scandir(SD)
   for abc in xyz :
     print(abc)
-"""
+exit()
 
 if not path.isdir(QbSpath) :
   errMsg = QbSpath + ' is not a directory, exiting routine\n'

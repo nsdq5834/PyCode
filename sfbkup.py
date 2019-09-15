@@ -9,6 +9,7 @@
 # Copy in needed support code
 
 from os import *
+from sys import setrecursionlimit
 from io import open
 from shutil import copy2
 from filecmp import dircmp
@@ -50,14 +51,20 @@ def write_to_logfile(wtl_tuple) :
 
     return True	
 	
-def enum_directory(directory)
+def enum_directory(ed_tuple) :
 
-    DirectoryContents = scandir(directory)
-	for EntryDescriptor in DirectoryContents :
-    print(abc)
-	
-	return True
+    localList = list(ed_tuple)
+    sdList = localList[0]
+    currentDirect = localList[1]
 
+    with scandir(currentDirect) as localDirectory :
+      for localEntry in localDirectory :
+        if not localEntry.name.startswith('.') and localEntry.is_dir():    
+          sdList.append(localEntry)
+          localTuple = (sdList, localEntry)
+          localFlag = enum_directory(localTuple)
+		  
+      return True
 
 # Define and initialize some variables we will use.
 
@@ -66,6 +73,8 @@ targetFile = ''
 logHandle = ''
 QbSflag = False
 QbLflag = False
+EnumFlag = False
+baseDirect = []
 sourceDirect = []
 targetDirect = []
 sourceFiles = []
@@ -132,19 +141,25 @@ else:
     isReadable = BkSrc.readable()
 	
 for lines in BkSrc :
-  sourceDirect.append(lines.strip())
+  baseDirect.append(lines.strip())
   
 BkSrc.close()
 
 # At this point sourceDirect contains the base list of directories that we will
 # examine for backup opportunities. This will be our main loop for building the
 # complete list of directories we will back up.
+#
+# We are going to use a tuple to call the enum_directory function. We will re-
+# turn a boolean flag.
 
-for SD in sourceDirect :
-  print('SD = ', SD)
-  xyz = scandir(SD)
-  for abc in xyz :
-    print(abc)
+for SD in baseDirect :
+    myTuple = (sourceDirect, SD)
+    EnumFlag = enum_directory(myTuple)
+
+for xyz in sourceDirect :
+  print('Entry = ', xyz)
+  
+print(len(sourceDirect))
 exit()
 
 if not path.isdir(QbSpath) :

@@ -49,7 +49,10 @@ def write_to_logfile(wtl_tuple) :
     logMessage = timeStamp + ' ' + messageText
     fileDescriptor.write(logMessage)
 
-    return True	
+    return True
+
+# enum_directory is a simple funtion that is used to locate and save
+# directory entries.
 	
 def enum_directory(ed_tuple) :
 

@@ -22,7 +22,7 @@ from datetime import datetime
 
 def open_the_logfile(otl_tuple) :
 
-  localList = list(otl_tuple)	
+  localList = list(otl_tuple)   
   LogFileLocation = localList[0]
   LogFileNamePrefix = localList[1]  
   
@@ -53,21 +53,24 @@ def write_to_logfile(wtl_tuple) :
 
 # enum_directory is a simple funtion that is used to locate and save
 # directory entries.
-	
+    
 def enum_directory(ed_tuple) :
 
     localList = list(ed_tuple)
     sdList = localList[0]
     currentDirect = localList[1]
-
-    with scandir(currentDirect) as localDirectory :
+	
+    try :
+      localDirectory = scandir(currentDirect)
+    except NotADirectoryError :
+      return False
+    else :
       for localEntry in localDirectory :
         if not localEntry.name.startswith('.') and localEntry.is_dir():    
           sdList.append(localEntry)
           localTuple = (sdList, localEntry)
           localFlag = enum_directory(localTuple)
-		  
-      return True
+          return True
 
 # Define and initialize some variables we will use.
 
@@ -109,7 +112,7 @@ for lines in parmFile:
 
   if myLines[0].strip() == "BkLfl" :
     QbLogFileLoc = myLines[1].strip()
-    QbLflag = True	
+    QbLflag = True  
   
 parmFile.close()
 
@@ -142,7 +145,7 @@ except FileNotFoundError:
     exit()
 else:
     isReadable = BkSrc.readable()
-	
+    
 for lines in BkSrc :
   baseDirect.append(lines.strip())
   

@@ -153,11 +153,15 @@ BkSrc.close()
 # turn a boolean flag.
 
 for SD in baseDirect :
+    sourceDirect.append(SD)
     myTuple = (sourceDirect, SD)
     EnumFlag = enum_directory(myTuple)
 
-for xyz in sourceDirect :
-  print('Entry = ', xyz)
+print(sourceDirect[15])
+dList = scandir(SD)
+
+for xyzzz in dList :
+ print(xyzzz)
   
 print(len(sourceDirect))
 exit()

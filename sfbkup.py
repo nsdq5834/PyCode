@@ -1,5 +1,6 @@
 # sfbkup.py
-# Version 1.0
+# Version 1.00
+# Version 1.01
 
 # Python program to create backups of files. The list of files to be backed
 # is specified in the sfbkup.parms file. This file contains a list of direc-
@@ -39,6 +40,11 @@ def open_the_logfile(otl_tuple) :
     exit()
   else:
     return LogFileDescriptor
+
+#
+# write_to_logfile is a simple routine to allow us to write standardized mes-
+# sages to a logging file.
+#
 
 def write_to_logfile(wtl_tuple) :
 

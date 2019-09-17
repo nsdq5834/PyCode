@@ -53,6 +53,21 @@ def write_to_logfile(wtl_tuple) :
 
 # enum_directory is a simple funtion that is used to locate and save
 # directory entries.
+#
+# We call the routine with a tuple that contains two entries. The first entry
+# is the list of the source directories that we are building. The second entry
+# is the current entry we are examining.
+#
+# We use the try/except/else logic block to catch any errors that may occur.
+# We should never encounter the NotADirectoryError, but it is used as a safety.
+# We are more likely to encounter the PermissionError as we may be executing
+# the script as a normal user and not and administrator.
+#
+# There is most likely a more elegant way to obtain the list of directories and
+# subdirectories, but I have started with this method as I am trying to learn
+# Python.
+#
+# Note that were calling the routine recusively.
     
 def enum_directory(ed_tuple) :
 
@@ -63,14 +78,19 @@ def enum_directory(ed_tuple) :
     try :
       localDirectory = scandir(currentDirect)
     except NotADirectoryError :
+      print('Not a directory')
+      return False
+    except PermissionError :
+      print('Permission Error', currentDirect)
       return False
     else :
+      sdList.append(currentDirect)
       for localEntry in localDirectory :
-        if not localEntry.name.startswith('.') and localEntry.is_dir():    
-          sdList.append(localEntry)
-          localTuple = (sdList, localEntry)
+        if localEntry.is_dir(): 		
+          localTuple = (sdList, localEntry.path)
           localFlag = enum_directory(localTuple)
-          return True
+		  
+      return True
 
 # Define and initialize some variables we will use.
 
@@ -159,17 +179,13 @@ BkSrc.close()
 # turn a boolean flag.
 
 for SD in baseDirect :
-    sourceDirect.append(SD)
     myTuple = (sourceDirect, SD)
     EnumFlag = enum_directory(myTuple)
 
-print(sourceDirect[15])
-dList = scandir(SD)
+for xyz in sourceDirect:
+ print(xyz)
 
-for xyzzz in dList :
- print(xyzzz)
-  
-print(len(sourceDirect))
+print(len(sourceDirect)) 
 exit()
 
 if not path.isdir(QbSpath) :

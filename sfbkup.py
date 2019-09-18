@@ -178,6 +178,7 @@ QbLflag = write_to_logfile(myTuple)
 # we will read the files contents, and then close the file.
 # 
 
+linesRead = 0
 try:
     BkSrc = open(QbSpath,"r",1)
 except PermissionError:
@@ -191,8 +192,13 @@ else:
     
 for lines in BkSrc :
   baseDirect.append(lines.strip())
+  linesRead += 1
   
 BkSrc.close()
+
+logMessage = 'Number of base directories = ' + str(len(linesRead)) +'\n'
+myTuple = (logHandle, logMessage)
+QbLflag = write_to_logfile(myTuple)
 
 #
 # Next we will process the exclusion list file. These are known directories
@@ -215,6 +221,10 @@ for lines in BkExc :
   baseExcept.append(lines.strip())
   
 BkExc.close()
+
+logMessage = 'Number of directories to exclude = ' + str(len(linesRead)) +'\n'
+myTuple = (logHandle, logMessage)
+QbLflag = write_to_logfile(myTuple)
 
 # At this point sourceDirect contains the base list of directories that we will
 # examine for backup opportunities. This will be our main loop for building the

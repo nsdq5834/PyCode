@@ -196,7 +196,7 @@ for lines in BkSrc :
   
 BkSrc.close()
 
-logMessage = 'Number of base directories = ' + str(len(linesRead)) +'\n'
+logMessage = 'Number of base directories = ' + str(linesRead) +'\n'
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
 
@@ -206,6 +206,7 @@ QbLflag = write_to_logfile(myTuple)
 # file, we will read the file contents and then close the file.
 #
 
+linesRead = 0
 try:
     BkExc = open(QbEpath,"r",1)
 except PermissionError:
@@ -219,10 +220,11 @@ else:
     
 for lines in BkExc :
   baseExcept.append(lines.strip())
+  linesRead += 1
   
 BkExc.close()
 
-logMessage = 'Number of directories to exclude = ' + str(len(linesRead)) +'\n'
+logMessage = 'Number of directories to exclude = ' + str(linesRead) +'\n'
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
 
@@ -236,6 +238,14 @@ QbLflag = write_to_logfile(myTuple)
 for SD in baseDirect :
     myTuple = (sourceDirect, SD)
     EnumFlag = enum_directory(myTuple)
+	
+#
+# Now that we have the total list of directories that are to be backed up,
+# we will remove any direcory that was in the exclude list.
+#
+
+for ED in baseExcept :
+  sourceDirect.remove(ED)
 
 #
 # At this point we have located all of the source directories that we will pro-

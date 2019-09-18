@@ -1,6 +1,7 @@
 # sfbkup.py
 # Version 1.00
 # Version 1.01
+# Version 1.02
 
 # Python program to create backups of files. The list of files to be backed
 # is specified in the sfbkup.parms file. This file contains a list of direc-
@@ -170,7 +171,12 @@ myTuple = (logHandle, 'Beginning program execution.\n')
 QbLflag = write_to_logfile(myTuple)
 myTuple = (logHandle, 'Processing records from source file.\n')
 QbLflag = write_to_logfile(myTuple)
- 
+
+#
+# Next we will process the source directory file. This file contains the base
+# set of directories we will start with. If we are able to open the file then
+# we will read the files contents, and then close the file.
+# 
 
 try:
     BkSrc = open(QbSpath,"r",1)
@@ -187,6 +193,12 @@ for lines in BkSrc :
   baseDirect.append(lines.strip())
   
 BkSrc.close()
+
+#
+# Next we will process the exclusion list file. These are known directories
+# that we do not want to attempt to backup. If we are able to open the
+# file, we will read the file contents and then close the file.
+#
 
 try:
     BkExc = open(QbEpath,"r",1)

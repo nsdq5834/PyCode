@@ -84,10 +84,8 @@ def enum_directory(ed_tuple) :
     try :
       localDirectory = scandir(currentDirect)
     except NotADirectoryError :
-      print('Not a directory')
       return False
     except PermissionError :
-      print('Permission Error', currentDirect)
       return False
     else :
       sdList.append(currentDirect)
@@ -98,15 +96,24 @@ def enum_directory(ed_tuple) :
 		  
       return True
 
+# Set our recursion limit/depth.
+
+setrecursionlimit(10000)
+
 # Define and initialize some variables we will use.
 
 sourceFile = ''
 targetFile = ''
 logHandle = ''
+backupPrefix = 'D:\Asus SyncFolder\@BU\\'
+
+QbEflag = False
 QbSflag = False
 QbLflag = False
 EnumFlag = False
+
 baseDirect = []
+baseExcept = []
 sourceDirect = []
 targetDirect = []
 sourceFiles = []
@@ -136,6 +143,10 @@ for lines in parmFile:
     QbSpath = myLines[1].strip()
     QbSflag = True
 
+  if myLines[0].strip() == "BkExc" :
+    QbEpath = myLines[1].strip()
+    QbEflag = True
+
   if myLines[0].strip() == "BkLfl" :
     QbLogFileLoc = myLines[1].strip()
     QbLflag = True  
@@ -144,7 +155,7 @@ parmFile.close()
 
 # Trivial test to make sure we have the two parameters we need.
 
-if (QbSflag == False or QbLflag == False) :
+if (QbEflag == False or QbSflag == False or QbLflag == False) :
   print('Parameter error in a parm file record.')
   exit()
   
@@ -177,6 +188,22 @@ for lines in BkSrc :
   
 BkSrc.close()
 
+try:
+    BkExc = open(QbEpath,"r",1)
+except PermissionError:
+    print('Access permission error')
+    exit()
+except FileNotFoundError:
+    print('File does not exist or not found')
+    exit()
+else:
+    isReadable = BkExc.readable()
+    
+for lines in BkExc :
+  baseExcept.append(lines.strip())
+  
+BkExc.close()
+
 # At this point sourceDirect contains the base list of directories that we will
 # examine for backup opportunities. This will be our main loop for building the
 # complete list of directories we will back up.
@@ -188,10 +215,51 @@ for SD in baseDirect :
     myTuple = (sourceDirect, SD)
     EnumFlag = enum_directory(myTuple)
 
-for xyz in sourceDirect:
- print(xyz)
+#
+# At this point we have located all of the source directories that we will pro-
+# cess. We sort the list of directories. Next we create the matching list of
+# target directories that we will back files up to.
+#
 
-print(len(sourceDirect)) 
+logMessage = 'Total number of directories to process = ' + str(len(sourceDirect)) +'\n'
+myTuple = (logHandle, logMessage)
+QbLflag = write_to_logfile(myTuple)
+
+sourceDirect.sort()
+
+myTuple = (logHandle, 'Source directory list has been sorted.\n')
+QbLflag = write_to_logfile(myTuple)
+
+for SD in sourceDirect :
+  splitSD = SD.split('\\', 1)
+  BD = backupPrefix + splitSD[1]
+  targetDirect.append(BD)
+  
+  
+myTuple = (logHandle, 'Target directory list has been built.\n')
+QbLflag = write_to_logfile(myTuple)
+myTuple = (logHandle, 'Checking for the existence of target directories.\n')
+QbLflag = write_to_logfile(myTuple)
+
+#
+# Next we will iterate through the list of target directories directories to
+# make sure they all exist. If we get a FileNotFoundError we will go ahead and
+# create the target directory.
+#
+
+for TD in targetDirect :
+#    print(TD, '\n')
+    try :
+      scandir(TD)
+    except FileNotFoundError :
+      mkdir(TD)
+      logMessage = 'Directory created = ' + TD +'\n'
+      myTuple = (logHandle, logMessage)
+      QbLflag = write_to_logfile(myTuple)
+
+myTuple = (logHandle, 'Completed checking for target directories.\n')
+QbLflag = write_to_logfile(myTuple)
+ 
 exit()
 
 if not path.isdir(QbSpath) :

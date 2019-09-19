@@ -119,8 +119,11 @@ sourceDirect = []
 targetDirect = []
 sourceFiles = []
 targetFiles = []
+
 sourceFile = []
 sourcePath = []
+sourceMtime = []
+sourceSize = []
 
 # See if we can open the parameter file.
 
@@ -312,6 +315,9 @@ for SD in sourceDirect :
         if SE.is_file() :
           sourceFile.append(SE.name)
           sourcePath.append(SE.path)
+          statVals = SE.stat()
+          sourceMtime.append(statVals.st_mtime)
+          sourceSize.append(statVals.st_size)
 
       
     tdFlag = False

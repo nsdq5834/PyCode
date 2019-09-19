@@ -81,7 +81,7 @@ def enum_directory(ed_tuple) :
     localList = list(ed_tuple)
     sdList = localList[0]
     currentDirect = localList[1]
-	
+    
     try :
       localDirectory = scandir(currentDirect)
     except NotADirectoryError :
@@ -91,10 +91,10 @@ def enum_directory(ed_tuple) :
     else :
       sdList.append(currentDirect)
       for localEntry in localDirectory :
-        if localEntry.is_dir(): 		
+        if localEntry.is_dir():         
           localTuple = (sdList, localEntry.path)
           localFlag = enum_directory(localTuple)
-		  
+          
       return True
 
 # Set our recursion limit/depth.
@@ -119,6 +119,8 @@ sourceDirect = []
 targetDirect = []
 sourceFiles = []
 targetFiles = []
+sourceFile = []
+sourcePath = []
 
 # See if we can open the parameter file.
 
@@ -238,7 +240,7 @@ QbLflag = write_to_logfile(myTuple)
 for SD in baseDirect :
     myTuple = (sourceDirect, SD)
     EnumFlag = enum_directory(myTuple)
-	
+    
 #
 # Now that we have the total list of directories that are to be backed up,
 # we will remove any direcory that was in the exclude list.
@@ -262,11 +264,13 @@ sourceDirect.sort()
 myTuple = (logHandle, 'Source directory list has been sorted.\n')
 QbLflag = write_to_logfile(myTuple)
 
+
+# Now create the list of target directories.
+
 for SD in sourceDirect :
   splitSD = SD.split('\\', 1)
   BD = backupPrefix + splitSD[1]
-  targetDirect.append(BD)
-  
+  targetDirect.append(BD)  
   
 myTuple = (logHandle, 'Target directory list has been built.\n')
 QbLflag = write_to_logfile(myTuple)
@@ -291,7 +295,41 @@ for TD in targetDirect :
 
 myTuple = (logHandle, 'Completed checking for target directories.\n')
 QbLflag = write_to_logfile(myTuple)
- 
+
+targetPointer = 0
+for SD in sourceDirect :
+
+    sdFlag = False
+    try:
+      sourceEntries = scandir(SD)
+    except NotADirectoryError :
+      sdFlag = False
+    except PermissionError :
+      sdFlag = False
+    else :
+      sdFlag = True
+      for SE in sourceEntries :
+        if SE.is_file() :
+          sourceFile.append(SE.name)
+          sourcePath.append(SE.path)
+
+      
+    tdFlag = False
+    try:
+      targetEntries = scandir(targetDirect[targetPointer])
+    except NotADirectoryError :
+      tdFlag = False
+    except PermissionError :
+      tdFlag = False
+    else :
+      tdFlag = True
+      
+    
+    sourceEntries.close()
+    targetEntries.close()
+    targetPointer += 1
+    exit()
+    
 exit()
 
 if not path.isdir(QbSpath) :

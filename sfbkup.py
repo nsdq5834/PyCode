@@ -125,6 +125,11 @@ sourcePath = []
 sourceMtime = []
 sourceSize = []
 
+targetFile = []
+targetPath = []
+targetMtime = []
+targetSize = []
+
 # See if we can open the parameter file.
 
 try:
@@ -250,7 +255,10 @@ for SD in baseDirect :
 #
 
 for ED in baseExcept :
-  sourceDirect.remove(ED)
+    try :
+      sourceDirect.remove(ED)
+    except ValueError :
+      pass
 
 #
 # At this point we have located all of the source directories that we will pro-
@@ -270,10 +278,15 @@ QbLflag = write_to_logfile(myTuple)
 
 # Now create the list of target directories.
 
+sourceTotal = 0
+
 for SD in sourceDirect :
-  splitSD = SD.split('\\', 1)
-  BD = backupPrefix + splitSD[1]
-  targetDirect.append(BD)  
+    splitSD = SD.split('\\', 1)
+    BD = backupPrefix + splitSD[1]
+    targetDirect.append(BD)
+    sourceTotal += 1  
+
+targetTotal = sourceTotal
   
 myTuple = (logHandle, 'Target directory list has been built.\n')
 QbLflag = write_to_logfile(myTuple)
@@ -299,18 +312,29 @@ for TD in targetDirect :
 myTuple = (logHandle, 'Completed checking for target directories.\n')
 QbLflag = write_to_logfile(myTuple)
 
+#
+# The following is the main loop for determining if an individual file needs
+# to be backed up. We do this by going through all of the source and matching
+# target directories looking for files that are on the source and not on the
+# target, or files on the source and target with the same name but different
+# date/time stamps and/or file size.
+#
+
+sourcePointer = 0
 targetPointer = 0
-for SD in sourceDirect :
+
+for sourcePointer in range(sourceTotal) :
 
     sdFlag = False
     try:
-      sourceEntries = scandir(SD)
+      sourceEntries = scandir(sourceDirect[sourcePointer])
     except NotADirectoryError :
-      sdFlag = False
+      pass
     except PermissionError :
-      sdFlag = False
+      pass
     else :
       sdFlag = True
+      seCounter = 0
       for SE in sourceEntries :
         if SE.is_file() :
           sourceFile.append(SE.name)
@@ -318,71 +342,57 @@ for SD in sourceDirect :
           statVals = SE.stat()
           sourceMtime.append(statVals.st_mtime)
           sourceSize.append(statVals.st_size)
+          sdFlag = True
+          seCounter += 1
 
-      
-    tdFlag = False
-    try:
-      targetEntries = scandir(targetDirect[targetPointer])
-    except NotADirectoryError :
+    if sdFlag : 
       tdFlag = False
-    except PermissionError :
-      tdFlag = False
-    else :
-      tdFlag = True
-      
+      try:
+        targetEntries = scandir(targetDirect[sourcePointer])
+      except NotADirectoryError :
+        pass
+      except PermissionError :
+        pass
+      else :
+        tdFlag = True
+        for TE in targetEntries :
+          if TE.is_file() :
+            targetFile.append(TE.name)
+            targetPath.append(TE.path)
+            statVals = TE.stat()
+            targetMtime.append(statVals.st_mtime)
+            targetSize.append(statVals.st_size)
+      print(seCounter)
+      for sfPointer in range(seCounter) :
+        print(sourceFile[sfPointer],' <--> ',targetFile[sfPointer])
+      exit()
+	  
+      if tdFlag :
+        for sfPointer in range(seCounter) :
+          try :
+            tfPointer = targetFile.index(sourceFile[sfPointer])
+          except ValueError :
+            sourceFileEntry = sourcePath[sfPointer] + sourceFile[sfPointer]
+            targetFileEntry = backupPrefix + sourceFile[sfPointer]
+            print(sourceFileEntry, '<-->', targetFileEntry)
+          else :
+            print('File found')          
+      else :
+        for sfPointer in range(seCounter) :
+          sourceFileEntry = sourcePath[sfPointer] + sourceFile[sfPointer]
+          targetFileEntry = backupPrefix + sourceFile[sfPointer]
+          print(sourceFileEntry, '<-->', targetFileEntry)         
     
     sourceEntries.close()
     targetEntries.close()
-    targetPointer += 1
-    exit()
-    
-exit()
-
-if not path.isdir(QbSpath) :
-  errMsg = QbSpath + ' is not a directory, exiting routine\n'
-  myTuple = (logHandle, errMsg)
-  QbLflag = write_to_logfile(myTuple)
-  exit()
-else :
-  txtMsg = 'Source directory is ' + QbSpath + '\n'
-  logHandle.write(txtMsg)
-  
-if not path.isdir(QbTpath) :
-  errMsg = QbTpath + ' is not a directory, exiting routine\n'
-  logHandle.write(errMsg)
-  exit()
-else :
-  txtMsg = 'Target directory is ' + QbTpath + '\n'
-  logHandle.write(txtMsg)
-  
-txtMsg = 'Source and target directories are valid\n'
-logHandle.write(txtMsg)
-
-txtMsg = 'Obtaining list of files in source and not in target\n'
-logHandle.write(txtMsg)
-
-# We are going to use the dircmp function from filecmp. This will do a
-# comparison of the source and target directories. From that we will use
-# the left_only property to obtain a list of files that are in the source
-# directory, but not in the target directory.
-
-filesNeedingBackup = dircmp(QbSpath,QbTpath,None,None).left_only
-
-# Now that we have the list of files we can iterate over them and back them
-# up using the copy2 method.
-
-for FNB in filesNeedingBackup :
-  sourceFile = QbSpath + FNB
-  targetFile = QbTpath + FNB
-  try:
-    copy2(sourceFile, targetFile)
-  except OSError:
-    print("Error")
-  else:
-    txtMsg = sourceFile + ' has been copied to target directory\n'
-    logHandle.write(txtMsg)
-
-logHandle.write('Exiting program\n')  
-logHandle.close()
-
+""" 
+    if sourcePointer != 0 :
+      for sePointer in range(sourcePointer) :
+        try :
+          tePointer = targetFile.index(sourceFile[sePointer])
+        except ValueError :
+          print(sePointer, sourcePath[sePointer], sourceFile[sePointer])
+        else:
+          pass
+"""    
 exit()

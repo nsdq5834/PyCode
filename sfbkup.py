@@ -12,6 +12,7 @@
 
 from os import *
 from sys import setrecursionlimit
+from subprocess import call
 from io import open
 from shutil import copy2
 from filecmp import dircmp
@@ -322,6 +323,7 @@ QbLflag = write_to_logfile(myTuple)
 
 sourcePointer = 0
 targetPointer = 0
+totalBytes = 0
 
 for sourcePointer in range(sourceTotal) :
 
@@ -362,37 +364,34 @@ for sourcePointer in range(sourceTotal) :
             statVals = TE.stat()
             targetMtime.append(statVals.st_mtime)
             targetSize.append(statVals.st_size)
-      print(seCounter)
-      for sfPointer in range(seCounter) :
-        print(sourceFile[sfPointer],' <--> ',targetFile[sfPointer])
-      exit()
-	  
-      if tdFlag :
+      
+      if sdFlag and tdFlag :
         for sfPointer in range(seCounter) :
           try :
             tfPointer = targetFile.index(sourceFile[sfPointer])
           except ValueError :
-            sourceFileEntry = sourcePath[sfPointer] + sourceFile[sfPointer]
-            targetFileEntry = backupPrefix + sourceFile[sfPointer]
-            print(sourceFileEntry, '<-->', targetFileEntry)
+            sourceFileEntry = sourcePath[sfPointer]
+            splitSD = sourceFileEntry.split('\\',1)
+            targetFileEntry = backupPrefix + splitSD[1]
+            logMessage = 'Backing up --> ' + sourceFileEntry + '\n'
+            myTuple = (logHandle, logMessage)
+            QbLflag = write_to_logfile(myTuple)
+            copy2(sourceFileEntry, targetFileEntry)
           else :
-            print('File found')          
-      else :
-        for sfPointer in range(seCounter) :
-          sourceFileEntry = sourcePath[sfPointer] + sourceFile[sfPointer]
-          targetFileEntry = backupPrefix + sourceFile[sfPointer]
-          print(sourceFileEntry, '<-->', targetFileEntry)         
+            if ((sourceMtime[sfPointer] != targetMtime[sfPointer]) or
+              (sourceSize[sfPointer] != targetSize[sfPointer])) :
+                sourceFileEntry = sourcePath[sfPointer]
+                targetFileEntry = targetPath[sfPointer]
+                logMessage = 'Backing up --> ' + sourceFileEntry + '\n'
+                myTuple = (logHandle, logMessage)
+                QbLflag = write_to_logfile(myTuple)
+                copy2(sourceFileEntry, targetFileEntry)            
+         
     
     sourceEntries.close()
     targetEntries.close()
-""" 
-    if sourcePointer != 0 :
-      for sePointer in range(sourcePointer) :
-        try :
-          tePointer = targetFile.index(sourceFile[sePointer])
-        except ValueError :
-          print(sePointer, sourcePath[sePointer], sourceFile[sePointer])
-        else:
-          pass
-"""    
+	
+myTuple = (logHandle, 'Terminating program execution \n')
+QbLflag = write_to_logfile(myTuple)
+    
 exit()

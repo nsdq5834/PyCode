@@ -380,11 +380,11 @@ for sourcePointer in range(sourceTotal) :
             totalFilesBackedUp += 1
             totalBytes = totalBytes + sourceSize[sfPointer]
           else :
-            if ((sourceMtime[sfPointer] != targetMtime[sfPointer]) or
+            if ((sourceMtime[sfPointer] > targetMtime[sfPointer]) or
               (sourceSize[sfPointer] != targetSize[sfPointer])) :
                 sourceFileEntry = sourcePath[sfPointer]
                 targetFileEntry = targetPath[sfPointer]
-                logMessage = 'Backing up --> ' + sourceFileEntry + '\n'
+                logMessage = 'Backing up ++> ' + sourceFileEntry + '\n'
                 myTuple = (logHandle, logMessage)
                 QbLflag = write_to_logfile(myTuple)
                 copy2(sourceFileEntry, targetFileEntry)            
@@ -397,7 +397,11 @@ for sourcePointer in range(sourceTotal) :
 logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp) + '\n'
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
-logMessage = 'Total number of bytes backed up = ' + str(totalBytes) + '\n'
+
+if totalBytes != 0 :
+    totalBytes = totalBytes / 1024
+
+logMessage = 'Total number of Kbytes backed up = ' + str(totalBytes) + '\n'
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple) 
 myTuple = (logHandle, 'Terminating program execution \n')

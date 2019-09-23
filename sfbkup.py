@@ -13,11 +13,11 @@
 
 from os import *
 from sys import setrecursionlimit
-from subprocess import call
 from io import open
 from shutil import copy2
 from filecmp import dircmp
 from datetime import datetime
+from math import ceil
 
 # open_the_logfile is a simple function that accepts two parameters and uses
 # them to create a unique name for a log file, and then opens the file. If we 
@@ -329,6 +329,8 @@ totalBytes = 0
 for sourcePointer in range(sourceTotal) :
 
     sdFlag = False
+    tdFlag = False
+
     try:
       sourceEntries = scandir(sourceDirect[sourcePointer])
     except NotADirectoryError :
@@ -336,8 +338,11 @@ for sourcePointer in range(sourceTotal) :
     except PermissionError :
       pass
     else :
-      sdFlag = True
       seCounter = 0
+      sourceFile.clear()
+      sourcePath.clear()
+      sourceMtime.clear()
+      sourceSize.clear()
       for SE in sourceEntries :
         if SE.is_file() :
           sourceFile.append(SE.name)
@@ -347,9 +352,9 @@ for sourcePointer in range(sourceTotal) :
           sourceSize.append(statVals.st_size)
           sdFlag = True
           seCounter += 1
+#          print(SE.name)
 
-    if sdFlag : 
-      tdFlag = False
+    if sdFlag :
       try:
         targetEntries = scandir(targetDirect[sourcePointer])
       except NotADirectoryError :
@@ -357,7 +362,10 @@ for sourcePointer in range(sourceTotal) :
       except PermissionError :
         pass
       else :
-        tdFlag = True
+        targetFile.clear()
+        targetPath.clear()
+        targetMtime.clear()
+        targetSize.clear()
         for TE in targetEntries :
           if TE.is_file() :
             targetFile.append(TE.name)
@@ -365,42 +373,85 @@ for sourcePointer in range(sourceTotal) :
             statVals = TE.stat()
             targetMtime.append(statVals.st_mtime)
             targetSize.append(statVals.st_size)
+            tdFlag = True
+#            print(TE.name)
       
+      if sdFlag and not tdFlag :
+#        print('sdFlag and not tdFlag')
+        for sfPointer in range(seCounter) :
+          sourceFileEntry = sourcePath[sfPointer]
+          splitSD = sourceFileEntry.split('\\',1)
+          targetFileEntry = backupPrefix + splitSD[1]
+          logMessage = 'Backing up1 --> ' + sourceFileEntry + '\n'
+          myTuple = (logHandle, logMessage)
+          QbLflag = write_to_logfile(myTuple)
+          copy2(sourceFileEntry, targetFileEntry)
+          totalFilesBackedUp += 1
+          totalBytes = totalBytes + sourceSize[sfPointer]
+            
       if sdFlag and tdFlag :
+#        print('sdFlag and tdFlag')
         for sfPointer in range(seCounter) :
           try :
             tfPointer = targetFile.index(sourceFile[sfPointer])
           except ValueError :
+#            print('sdFlag and tdFlag ValueError')
             sourceFileEntry = sourcePath[sfPointer]
             splitSD = sourceFileEntry.split('\\',1)
             targetFileEntry = backupPrefix + splitSD[1]
-            logMessage = 'Backing up --> ' + sourceFileEntry + '\n'
-            myTuple = (logHandle, logMessage)
-            QbLflag = write_to_logfile(myTuple)
-            copy2(sourceFileEntry, targetFileEntry)
-            totalFilesBackedUp += 1
-            totalBytes = totalBytes + sourceSize[sfPointer]
+            try :
+              copy2(sourceFileEntry, targetFileEntry)
+            except PermissionError :
+              logMessage = 'PermissionError up2 ++> ' + sourceFileEntry + '\n'
+              myTuple = (logHandle, logMessage)
+              QbLflag = write_to_logfile(myTuple)
+            else :
+              logMessage = 'Backing up2 ++> ' + sourceFileEntry + '\n'
+              myTuple = (logHandle, logMessage)
+              QbLflag = write_to_logfile(myTuple)               
+              totalFilesBackedUp += 1
+              totalBytes = totalBytes + sourceSize[sfPointer]
+#            logMessage = 'Backing up2 --> ' + sourceFileEntry + '\n'
+#            myTuple = (logHandle, logMessage)
+#            QbLflag = write_to_logfile(myTuple)
+#            copy2(sourceFileEntry, targetFileEntry)
+#            totalFilesBackedUp += 1
+#            totalBytes = totalBytes + sourceSize[sfPointer]
           else :
-            if ((sourceMtime[sfPointer] > targetMtime[sfPointer]) or
-              (sourceSize[sfPointer] != targetSize[sfPointer])) :
+#            print('sdFlag and tdFlag Valid Index')
+#            print(sourceMtime[sfPointer],' ',targetMtime[sfPointer])
+#            print(sourceSize[sfPointer],' ',targetSize[sfPointer])
+            if ((sourceMtime[sfPointer] != targetMtime[tfPointer]) or
+              (sourceSize[sfPointer] != targetSize[tfPointer])) :
                 sourceFileEntry = sourcePath[sfPointer]
                 targetFileEntry = targetPath[sfPointer]
-                logMessage = 'Backing up ++> ' + sourceFileEntry + '\n'
-                myTuple = (logHandle, logMessage)
-                QbLflag = write_to_logfile(myTuple)
-                copy2(sourceFileEntry, targetFileEntry)            
-                totalFilesBackedUp += 1
-                totalBytes = totalBytes + sourceSize[sfPointer]
+#                logMessage = 'Backing up3 ++> ' + sourceFileEntry + '\n'
+#                myTuple = (logHandle, logMessage)
+#                QbLflag = write_to_logfile(myTuple)
+                try :
+                  copy2(sourceFileEntry, targetFileEntry)
+                except PermissionError :
+                  logMessage = 'PermissionError up3 ++> ' + sourceFileEntry + '\n'
+                  myTuple = (logHandle, logMessage)
+                  QbLflag = write_to_logfile(myTuple)
+                else :
+                  logMessage = 'Backing up3 ++> ' + sourceFileEntry + '\n'
+                  myTuple = (logHandle, logMessage)
+                  QbLflag = write_to_logfile(myTuple)               
+                  totalFilesBackedUp += 1
+                  totalBytes = totalBytes + sourceSize[sfPointer]
     
     sourceEntries.close()
     targetEntries.close()
+    
+#    exit()
 
 logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp) + '\n'
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
 
 if totalBytes != 0 :
-    totalBytes = totalBytes / 1024
+    totalBytes = ceil(totalBytes / 1024)
 
 logMessage = 'Total number of Kbytes backed up = ' + str(totalBytes) + '\n'
 myTuple = (logHandle, logMessage)

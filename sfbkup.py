@@ -103,12 +103,13 @@ def enum_directory(ed_tuple) :
 
 lineFeed = '\n'
 logHandle = ''
-backupPrefix = 'D:\Asus SyncFolder\@BU\\'
+#QbBackupLoc = 'D:\Asus SyncFolder\@BU\\'
 
 QbEflag = False
 QbSflag = False
 QbLflag = False
 QbRflag = False
+QbBflag = False
 EnumFlag = False
 
 baseDirect = []
@@ -137,7 +138,7 @@ except FileNotFoundError:
     print('File does not exist or not found')
     exit()
 else:
-    isReadable = parmFile.readable()
+    pass
 
 # Read and process the parameter file. Very simple logic to isolate the
 # parameters we need. We set the recursion limit before we read the parm
@@ -147,30 +148,37 @@ recursionLimit = 5000
 
 for lines in parmFile:
 
-  myLines = lines.split("=",2)
+    if lines[:1] != '#' :
+
+      myLines = lines.split("=",2)
   
-  if myLines[0].strip() == "BkSrc" :
-    QbSpath = myLines[1].strip()
-    QbSflag = True
+      if myLines[0].strip() == "BackupSource" :
+        QbSpath = myLines[1].strip()
+        QbSflag = True
 
-  if myLines[0].strip() == "BkExc" :
-    QbEpath = myLines[1].strip()
-    QbEflag = True
+      if myLines[0].strip() == "ExcludeSource" :
+        QbEpath = myLines[1].strip()
+        QbEflag = True
 
-  if myLines[0].strip() == "BkLfl" :
-    QbLogFileLoc = myLines[1].strip()
-    QbLflag = True
-    
-  if myLines[0].strip() == "BkRec" :
-    recursionLimit = int(myLines[1].strip())
+      if myLines[0].strip() == "LogFileLocation" :
+        QbLogFileLoc = myLines[1].strip()
+        QbLflag = True
+
+      if myLines[0].strip() == "BackupBaseLocation" :
+        QbBackupLoc = myLines[1].strip()
+        QbBflag = True
+        
+      if myLines[0].strip() == "RecursionLimit" :
+        recursionLimit = int(myLines[1].strip())
   
 parmFile.close()
 
-# Trivial test to make sure we have the two parameters we need.
+# Trivial test to make sure we have the four parameters we need.
 
-if (QbEflag == False or QbSflag == False or QbLflag == False) :
-  print('Parameter error in a parm file record.')
-  exit()
+if (QbEflag == False or QbSflag == False or
+    QbBflag == False or QbLflag == False) :
+      print('Parameter error in a parm file record.')
+      exit()
   
 # Now set the recursion limit.
 
@@ -210,7 +218,7 @@ except FileNotFoundError:
     print('File does not exist or not found')
     exit()
 else:
-    isReadable = BkSrc.readable()
+    pass
     
 for lines in BkSrc :
   baseDirect.append(lines.strip())
@@ -239,7 +247,7 @@ except FileNotFoundError:
     print('File does not exist or not found')
     exit()
 else:
-    isReadable = BkExc.readable()
+    pass
     
 for lines in BkExc :
   baseExcept.append(lines.strip())
@@ -247,7 +255,7 @@ for lines in BkExc :
   
 BkExc.close()
 
-logMessage = 'Number of directories to exclude = ' + str(linesRead) +'\n'
+logMessage = 'Number of directories to exclude = ' + str(linesRead) + lineFeed
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
 
@@ -295,7 +303,7 @@ sourceTotal = 0
 
 for SD in sourceDirect :
     splitSD = SD.split('\\', 1)
-    BD = backupPrefix + splitSD[1]
+    BD = QbBackupLoc + splitSD[1]
     targetDirect.append(BD)
     sourceTotal += 1  
 
@@ -388,7 +396,7 @@ for sourcePointer in range(sourceTotal) :
         for sfPointer in range(seCounter) :
           sourceFileEntry = sourcePath[sfPointer]
           splitSD = sourceFileEntry.split('\\',1)
-          targetFileEntry = backupPrefix + splitSD[1]
+          targetFileEntry = QbBackupLoc + splitSD[1]
           try :
             copy2(sourceFileEntry, targetFileEntry)
           except PermissionError :
@@ -400,7 +408,7 @@ for sourcePointer in range(sourceTotal) :
             myTuple = (logHandle, logMessage)
             QbLflag = write_to_logfile(myTuple)
             totalFilesBackedUp += 1
-            totalBytes = totalBytes + sourceSize[sfPointer]
+            totalBytes += sourceSize[sfPointer]
             
       if sdFlag and tdFlag :
         for sfPointer in range(seCounter) :
@@ -409,7 +417,7 @@ for sourcePointer in range(sourceTotal) :
           except ValueError :
             sourceFileEntry = sourcePath[sfPointer]
             splitSD = sourceFileEntry.split('\\',1)
-            targetFileEntry = backupPrefix + splitSD[1]
+            targetFileEntry = QbBackupLoc + splitSD[1]
             try :
               copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :
@@ -421,7 +429,7 @@ for sourcePointer in range(sourceTotal) :
               myTuple = (logHandle, logMessage)
               QbLflag = write_to_logfile(myTuple)               
               totalFilesBackedUp += 1
-              totalBytes = totalBytes + sourceSize[sfPointer]
+              totalBytes += sourceSize[sfPointer]
           else :
             if ((sourceMtime[sfPointer] != targetMtime[tfPointer]) or
               (sourceSize[sfPointer] != targetSize[tfPointer])) :
@@ -438,7 +446,7 @@ for sourcePointer in range(sourceTotal) :
                   myTuple = (logHandle, logMessage)
                   QbLflag = write_to_logfile(myTuple)               
                   totalFilesBackedUp += 1
-                  totalBytes = totalBytes + sourceSize[sfPointer]
+                  totalBytes += sourceSize[sfPointer]
     
     sourceEntries.close()
     targetEntries.close()

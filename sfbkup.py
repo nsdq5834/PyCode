@@ -382,12 +382,18 @@ for sourcePointer in range(sourceTotal) :
           sourceFileEntry = sourcePath[sfPointer]
           splitSD = sourceFileEntry.split('\\',1)
           targetFileEntry = backupPrefix + splitSD[1]
-          logMessage = 'Backing up1 --> ' + sourceFileEntry + '\n'
-          myTuple = (logHandle, logMessage)
-          QbLflag = write_to_logfile(myTuple)
-          copy2(sourceFileEntry, targetFileEntry)
-          totalFilesBackedUp += 1
-          totalBytes = totalBytes + sourceSize[sfPointer]
+          try :
+            copy2(sourceFileEntry, targetFileEntry)
+          except PermissionError :
+            logMessage = 'PermissionError up1 --> ' + sourceFileEntry + '\n'
+            myTuple = (logHandle, logMessage)
+            QbLflag = write_to_logfile(myTuple)
+          else :
+            logMessage = 'Backing up1 --> ' + sourceFileEntry + '\n'
+            myTuple = (logHandle, logMessage)
+            QbLflag = write_to_logfile(myTuple)
+            totalFilesBackedUp += 1
+            totalBytes = totalBytes + sourceSize[sfPointer]
             
       if sdFlag and tdFlag :
 #        print('sdFlag and tdFlag')
@@ -402,11 +408,11 @@ for sourcePointer in range(sourceTotal) :
             try :
               copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :
-              logMessage = 'PermissionError up2 ++> ' + sourceFileEntry + '\n'
+              logMessage = 'PermissionError up2 --> ' + sourceFileEntry + '\n'
               myTuple = (logHandle, logMessage)
               QbLflag = write_to_logfile(myTuple)
             else :
-              logMessage = 'Backing up2 ++> ' + sourceFileEntry + '\n'
+              logMessage = 'Backing up2 --> ' + sourceFileEntry + '\n'
               myTuple = (logHandle, logMessage)
               QbLflag = write_to_logfile(myTuple)               
               totalFilesBackedUp += 1
@@ -431,11 +437,11 @@ for sourcePointer in range(sourceTotal) :
                 try :
                   copy2(sourceFileEntry, targetFileEntry)
                 except PermissionError :
-                  logMessage = 'PermissionError up3 ++> ' + sourceFileEntry + '\n'
+                  logMessage = 'PermissionError up3 --> ' + sourceFileEntry + '\n'
                   myTuple = (logHandle, logMessage)
                   QbLflag = write_to_logfile(myTuple)
                 else :
-                  logMessage = 'Backing up3 ++> ' + sourceFileEntry + '\n'
+                  logMessage = 'Backing up3 --> ' + sourceFileEntry + '\n'
                   myTuple = (logHandle, logMessage)
                   QbLflag = write_to_logfile(myTuple)               
                   totalFilesBackedUp += 1

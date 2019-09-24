@@ -99,30 +99,22 @@ def enum_directory(ed_tuple) :
           
       return True
 
-# Set our recursion limit/depth.
-
-setrecursionlimit(10000)
-
 # Define and initialize some variables we will use.
 
 lineFeed = '\n'
-
-sourceFile = ''
-targetFile = ''
 logHandle = ''
 backupPrefix = 'D:\Asus SyncFolder\@BU\\'
 
 QbEflag = False
 QbSflag = False
 QbLflag = False
+QbRflag = False
 EnumFlag = False
 
 baseDirect = []
 baseExcept = []
 sourceDirect = []
 targetDirect = []
-sourceFiles = []
-targetFiles = []
 
 sourceFile = []
 sourcePath = []
@@ -148,7 +140,10 @@ else:
     isReadable = parmFile.readable()
 
 # Read and process the parameter file. Very simple logic to isolate the
-# parameters we need.
+# parameters we need. We set the recursion limit before we read the parm
+# file. Use a simple if ladder to isolate our parameters.
+
+recursionLimit = 5000
 
 for lines in parmFile:
 
@@ -164,7 +159,10 @@ for lines in parmFile:
 
   if myLines[0].strip() == "BkLfl" :
     QbLogFileLoc = myLines[1].strip()
-    QbLflag = True  
+    QbLflag = True
+    
+  if myLines[0].strip() == "BkRec" :
+    recursionLimit = int(myLines[1].strip())
   
 parmFile.close()
 
@@ -174,6 +172,10 @@ if (QbEflag == False or QbSflag == False or QbLflag == False) :
   print('Parameter error in a parm file record.')
   exit()
   
+# Now set the recursion limit.
+
+setrecursionlimit(recursionLimit)
+  
 # We have the location for the log file, so we will try to create it.
 # We will create a simple tuple to pass to the open_the_logfile routine.
 # If we have a log file go ahead and write a couple of messages to it.
@@ -182,6 +184,10 @@ myTuple = (QbLogFileLoc, "sfbkup_")
 logHandle = open_the_logfile(myTuple)
 
 myTuple = (logHandle, 'Beginning program execution.\n')
+QbLflag = write_to_logfile(myTuple)
+
+logMessage = 'Recursion limit has been set to ' + str(recursionLimit) + lineFeed
+myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
 
 myTuple = (logHandle, 'Processing records from source file.\n')
@@ -194,6 +200,7 @@ QbLflag = write_to_logfile(myTuple)
 # 
 
 linesRead = 0
+
 try:
     BkSrc = open(QbSpath,"r",1)
 except PermissionError:
@@ -222,6 +229,7 @@ QbLflag = write_to_logfile(myTuple)
 #
 
 linesRead = 0
+
 try:
     BkExc = open(QbEpath,"r",1)
 except PermissionError:
@@ -434,8 +442,6 @@ for sourcePointer in range(sourceTotal) :
     
     sourceEntries.close()
     targetEntries.close()
-    
-#    exit()
 
 logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp) + lineFeed
 myTuple = (logHandle, logMessage)

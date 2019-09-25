@@ -99,11 +99,13 @@ def enum_directory(ed_tuple) :
           
       return True
 
-# Define and initialize some variables we will use.
+# Define and initialize some constants variables we will use.
 
+kiloBytes = 1024
+megaBytes = kiloBytes * 1024
+gigaBytes = megaBytes * 1024
 lineFeed = '\n'
 logHandle = ''
-#QbBackupLoc = 'D:\Asus SyncFolder\@BU\\'
 
 QbEflag = False
 QbSflag = False

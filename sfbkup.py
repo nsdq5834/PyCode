@@ -458,9 +458,9 @@ myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
 
 if totalBytes != 0 :
-    totalBytes = ceil(totalBytes / 1024)
+    totalBytes = ceil(totalBytes / megaBytes)
 
-logMessage = 'Total number of Kbytes backed up = ' + str(totalBytes) + lineFeed
+logMessage = 'Total number of Megabytes backed up = ' + str(totalBytes) + lineFeed
 myTuple = (logHandle, logMessage)
 QbLflag = write_to_logfile(myTuple)
  

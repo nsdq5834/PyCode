@@ -3,6 +3,10 @@
 # Version 1.01
 # Version 1.02
 # Version 1.03
+# Version 1.04
+
+# Look here for logging examples. 
+# https://docs.python.org/3/howto/logging-cookbook.html
 
 # Python program to create backups of files. The list of files to be backed
 # is specified in the sfbkup.parms file. This file contains a list of direc-

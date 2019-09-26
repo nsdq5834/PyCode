@@ -16,12 +16,13 @@
 # Copy in needed support code
 
 from os import *
-from sys import setrecursionlimit
+from sys import setrecursionlimit, argv
 from io import open
 from shutil import copy2
 from filecmp import dircmp
 from datetime import datetime
 from math import ceil
+import logging
 
 # open_the_logfile is a simple function that accepts two parameters and uses
 # them to create a unique name for a log file, and then opens the file. If we 
@@ -132,6 +133,24 @@ targetFile = []
 targetPath = []
 targetMtime = []
 targetSize = []
+
+# Construct the log file name
+
+logFileBase = argv[1]
+logNameBase = path.splitext(path.basename(argv[0]))[0]
+logPathBase = logFileBase + logNameBase + '\\' +logNameBase + '_'
+rightNow = datetime.now()
+logFile = logPathBase + rightNow.strftime("%Y%m%d_%H%M%S") + ".loger"
+
+# create logger
+
+logging.basicConfig(filename=logFile,
+                   filemode='w',
+                   format='%(asctime)s %(module)s %(levelname)s %(message)s',
+                   datefmt='%m/%d/%Y %H:%M:%S',
+                   level=logging.DEBUG)
+                   
+logging.info('Begin program execution')
 
 # See if we can open the parameter file.
 
@@ -470,5 +489,7 @@ QbLflag = write_to_logfile(myTuple)
  
 myTuple = (logHandle, 'Terminating program execution \n')
 QbLflag = write_to_logfile(myTuple)
+
+logging.info('Terminating program execution')
     
 exit()

@@ -13,6 +13,11 @@
 # tories that will be scanned to build a list of the files that need to be
 # backed up.
 
+# The program is invoked with a single parameter which provides the base
+# location for the logging file.
+#
+# Example  C:\sfbkup D:\Logs\
+
 # Copy in needed support code
 
 from os import *

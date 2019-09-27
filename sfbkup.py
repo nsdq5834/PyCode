@@ -24,47 +24,6 @@ from datetime import datetime
 from math import ceil
 import logging
 
-# open_the_logfile is a simple function that accepts two parameters and uses
-# them to create a unique name for a log file, and then opens the file. If we 
-# are able to open the file, the file descriptor or handle is passed back.
-# If we encounter an error we will exit the routine.
-
-def open_the_logfile(otl_tuple) :
-
-  localList = list(otl_tuple)   
-  LogFileLocation = localList[0]
-  LogFileNamePrefix = localList[1]  
-  
-  rightNow = datetime.now()
-  logFile = LogFileLocation + LogFileNamePrefix + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
-  
-  try:
-    LogFileDescriptor = open(logFile,"w+")
-  except PermissionError:
-    print('Access permission error')
-    exit()
-  except OSerror:
-    print('OS error encountered')
-    exit()
-  else:
-    return LogFileDescriptor
-
-#
-# write_to_logfile is a simple routine to allow us to write standardized mes-
-# sages to a logging file.
-#
-
-def write_to_logfile(wtl_tuple) :
-
-    fileDescriptor = wtl_tuple[0]
-    messageText = wtl_tuple[1]
-    rightNow = datetime.now()
-    timeStamp = rightNow.strftime("%Y%m%d_%H%M%S")
-    logMessage = timeStamp + ' ' + messageText
-    fileDescriptor.write(logMessage)
-
-    return True
-
 # enum_directory is a simple funtion that is used to locate and save
 # directory entries.
 #
@@ -104,18 +63,14 @@ def enum_directory(ed_tuple) :
           
       return True
 
-# Define and initialize some constants variables we will use.
+# Define and initialize some constants and variables we will use.
 
 kiloBytes = 1024
 megaBytes = kiloBytes * 1024
 gigaBytes = megaBytes * 1024
-lineFeed = '\n'
-logHandle = ''
 
 QbEflag = False
 QbSflag = False
-QbLflag = False
-QbRflag = False
 QbBflag = False
 EnumFlag = False
 
@@ -134,21 +89,24 @@ targetPath = []
 targetMtime = []
 targetSize = []
 
+# We will use the built-in Python logging facility.
 # Construct the log file name
 
 logFileBase = argv[1]
 logNameBase = path.splitext(path.basename(argv[0]))[0]
 logPathBase = logFileBase + logNameBase + '\\' +logNameBase + '_'
 rightNow = datetime.now()
-logFile = logPathBase + rightNow.strftime("%Y%m%d_%H%M%S") + ".loger"
+logFile = logPathBase + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
 
-# create logger
+# Create logging file with specific parameters.
 
 logging.basicConfig(filename=logFile,
                    filemode='w',
                    format='%(asctime)s %(module)s %(levelname)s %(message)s',
                    datefmt='%m/%d/%Y %H:%M:%S',
                    level=logging.DEBUG)
+                   
+# Write opening line to our logger file.
                    
 logging.info('Begin program execution')
 
@@ -157,13 +115,13 @@ logging.info('Begin program execution')
 try:
     parmFile = open("sfbkup.parms","r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error reading parameter file.')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('Parameter file does not exist or not found.')
     exit()
 else:
-    pass
+    logging.info('Parameter file opened for procession.')
 
 # Read and process the parameter file. Very simple logic to isolate the
 # parameters we need. We set the recursion limit before we read the parm
@@ -185,10 +143,6 @@ for lines in parmFile:
         QbEpath = myLines[1].strip()
         QbEflag = True
 
-      if myLines[0].strip() == "LogFileLocation" :
-        QbLogFileLoc = myLines[1].strip()
-        QbLflag = True
-
       if myLines[0].strip() == "BackupBaseLocation" :
         QbBackupLoc = myLines[1].strip()
         QbBflag = True
@@ -201,30 +155,20 @@ parmFile.close()
 # Trivial test to make sure we have the four parameters we need.
 
 if (QbEflag == False or QbSflag == False or
-    QbBflag == False or QbLflag == False) :
-      print('Parameter error in a parm file record.')
+    QbBflag == False) :
+      logging.error('Parameter error in a parm file record.')
       exit()
-  
+
+logging.info('Parameter file has been read and processed')
+
 # Now set the recursion limit.
 
 setrecursionlimit(recursionLimit)
+
+logMessage = 'Recursion limit has been set to ' + str(recursionLimit)
+logging.info(logMessage)
   
-# We have the location for the log file, so we will try to create it.
-# We will create a simple tuple to pass to the open_the_logfile routine.
-# If we have a log file go ahead and write a couple of messages to it.
-
-myTuple = (QbLogFileLoc, "sfbkup_")
-logHandle = open_the_logfile(myTuple)
-
-myTuple = (logHandle, 'Beginning program execution.\n')
-QbLflag = write_to_logfile(myTuple)
-
-logMessage = 'Recursion limit has been set to ' + str(recursionLimit) + lineFeed
-myTuple = (logHandle, logMessage)
-QbLflag = write_to_logfile(myTuple)
-
-myTuple = (logHandle, 'Processing records from source file.\n')
-QbLflag = write_to_logfile(myTuple)
+logging.info('Processing records from source directory file.')
 
 #
 # Next we will process the source directory file. This file contains the base
@@ -251,9 +195,8 @@ for lines in BkSrc :
   
 BkSrc.close()
 
-logMessage = 'Number of base directories = ' + str(linesRead) +'\n'
-myTuple = (logHandle, logMessage)
-QbLflag = write_to_logfile(myTuple)
+logMessage = 'Number of base directories = ' + str(linesRead)
+logging.info(logMessage)
 
 #
 # Next we will process the exclusion list file. These are known directories
@@ -280,9 +223,8 @@ for lines in BkExc :
   
 BkExc.close()
 
-logMessage = 'Number of directories to exclude = ' + str(linesRead) + lineFeed
-myTuple = (logHandle, logMessage)
-QbLflag = write_to_logfile(myTuple)
+logMessage = 'Number of directories to exclude = ' + str(linesRead)
+logging.info(logMessage)
 
 # At this point sourceDirect contains the base list of directories that we will
 # examine for backup opportunities. This will be our main loop for building the
@@ -312,15 +254,12 @@ for ED in baseExcept :
 # target directories that we will back files up to.
 #
 
-logMessage = 'Total number of directories to process = ' + str(len(sourceDirect)) + lineFeed
-myTuple = (logHandle, logMessage)
-QbLflag = write_to_logfile(myTuple)
+logMessage = 'Total number of directories to process = ' + str(len(sourceDirect))
+logging.info(logMessage)
 
 sourceDirect.sort()
 
-myTuple = (logHandle, 'Source directory list has been sorted.\n')
-QbLflag = write_to_logfile(myTuple)
-
+logging.info('Source directory list has been sorted.')
 
 # Now create the list of target directories.
 
@@ -332,12 +271,10 @@ for SD in sourceDirect :
     targetDirect.append(BD)
     sourceTotal += 1  
 
-targetTotal = sourceTotal
-  
-myTuple = (logHandle, 'Target directory list has been built.\n')
-QbLflag = write_to_logfile(myTuple)
-myTuple = (logHandle, 'Checking for the existence of target directories.\n')
-QbLflag = write_to_logfile(myTuple)
+#targetTotal = sourceTotal
+
+logging.info('Target directory list has been built.')
+logging.info('Checking for the existence of target directories.')
 
 #
 # Next we will iterate through the list of target directories directories to
@@ -350,12 +287,10 @@ for TD in targetDirect :
       scandir(TD)
     except FileNotFoundError :
       mkdir(TD)
-      logMessage = 'Directory created = ' + TD + lineFeed
-      myTuple = (logHandle, logMessage)
-      QbLflag = write_to_logfile(myTuple)
+      logMessage = 'Directory created = ' + TD
+      logging.info(logMessage)
 
-myTuple = (logHandle, 'Completed checking for target directories.\n')
-QbLflag = write_to_logfile(myTuple)
+logging.info('Completed checking/creating target directories.')
 
 #
 # The following is the main loop for determining if an individual file needs
@@ -425,13 +360,11 @@ for sourcePointer in range(sourceTotal) :
           try :
             copy2(sourceFileEntry, targetFileEntry)
           except PermissionError :
-            logMessage = 'PermissionError up1 --> ' + sourceFileEntry + lineFeed
-            myTuple = (logHandle, logMessage)
-            QbLflag = write_to_logfile(myTuple)
+            logMessage = 'PermissionError --> ' + sourceFileEntry
+            logging.error(logMessage)
           else :
-            logMessage = 'Backing up1 --> ' + sourceFileEntry + lineFeed
-            myTuple = (logHandle, logMessage)
-            QbLflag = write_to_logfile(myTuple)
+            logMessage = 'Backing up --> ' + sourceFileEntry
+            logging.info(logMessage)
             totalFilesBackedUp += 1
             totalBytes += sourceSize[sfPointer]
             
@@ -446,13 +379,11 @@ for sourcePointer in range(sourceTotal) :
             try :
               copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :
-              logMessage = 'PermissionError up2 --> ' + sourceFileEntry + lineFeed
-              myTuple = (logHandle, logMessage)
-              QbLflag = write_to_logfile(myTuple)
+              logMessage = 'PermissionError --> ' + sourceFileEntry
+              logging.error(logMessage)
             else :
-              logMessage = 'Backing up2 --> ' + sourceFileEntry + lineFeed
-              myTuple = (logHandle, logMessage)
-              QbLflag = write_to_logfile(myTuple)               
+              logMessage = 'Backing up --> ' + sourceFileEntry
+              logging.info(logMessage)               
               totalFilesBackedUp += 1
               totalBytes += sourceSize[sfPointer]
           else :
@@ -463,32 +394,39 @@ for sourcePointer in range(sourceTotal) :
                 try :
                   copy2(sourceFileEntry, targetFileEntry)
                 except PermissionError :
-                  logMessage = 'PermissionError up3 --> ' + sourceFileEntry + lineFeed
-                  myTuple = (logHandle, logMessage)
-                  QbLflag = write_to_logfile(myTuple)
+                  logMessage = 'PermissionError --> ' + sourceFileEntry
+                  logging.error(logMessage)
                 else :
-                  logMessage = 'Backing up3 --> ' + sourceFileEntry + lineFeed
-                  myTuple = (logHandle, logMessage)
-                  QbLflag = write_to_logfile(myTuple)               
+                  logMessage = 'Backing up --> ' + sourceFileEntry
+                  logging.info(logMessage)               
                   totalFilesBackedUp += 1
                   totalBytes += sourceSize[sfPointer]
     
     sourceEntries.close()
     targetEntries.close()
 
-logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp) + lineFeed
-myTuple = (logHandle, logMessage)
-QbLflag = write_to_logfile(myTuple)
+logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp)
+logging.info(logMessage)
+
+# Some simple logic to output a message about to size of the backups.
+
+unitStorage = 'Bytes'
+unitDivisor = 1
 
 if totalBytes != 0 :
-    totalBytes = ceil(totalBytes / megaBytes)
+    if totalBytes > kiloBytes :
+      unitStorage = 'KiloBytes'
+      unitDivisor = kiloBytes
+    if totalBytes > megaBytes :
+      unitStorage = 'MegaBytes'
+      unitDivisor = megaBytes
+    if totalBytes > gigaBytes :
+      unitStorage = 'GigaBytes'
+      unitDivisor = gigaBytes
+    totalBytes = ceil(totalBytes / unitDivisor)
 
-logMessage = 'Total number of Megabytes backed up = ' + str(totalBytes) + lineFeed
-myTuple = (logHandle, logMessage)
-QbLflag = write_to_logfile(myTuple)
- 
-myTuple = (logHandle, 'Terminating program execution \n')
-QbLflag = write_to_logfile(myTuple)
+logMessage = 'Total number of ' + unitStorage + ' backed up = ' + str(totalBytes)
+logging.info(logMessage)
 
 logging.info('Terminating program execution')
     

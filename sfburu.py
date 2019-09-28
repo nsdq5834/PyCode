@@ -5,15 +5,16 @@
 # Look here for logging examples. 
 # https://docs.python.org/3/howto/logging-cookbook.html
 
-# Python program to create backups of files. The list of files to be backed
-# is specified in the sfbkup.parms file. This file contains a list of direc-
-# tories that will be scanned to build a list of the files that need to be
-# backed up.
+# Python program to compare source and target directories that were backed up
+# by sfbkup.py. We are looking for files that are in the backup but no longer
+# in the source directory. If a file matches that condition we will delete it
+# from the source.  Currently the script/program does not account for an en-
+# tire directory being deleted or removed from the source.
 
 # The program is invoked with a single parameter which provides the base
 # location for the logging file.
 #
-# Example  C:\sfbkup D:\Logs\
+# Example  C:\sfburu D:\Logs\
 
 # Copy in needed support code
 
@@ -65,6 +66,7 @@ def enum_directory(ed_tuple) :
           
       return True
 
+# Main script/program begins here.
 # Define and initialize some constants and variables we will use.
 
 kiloBytes = 1024
@@ -154,7 +156,7 @@ for lines in parmFile:
   
 parmFile.close()
 
-# Trivial test to make sure we have the four parameters we need.
+# Trivial test to make sure we have the three parameters we need.
 
 if (QbEflag == False or QbSflag == False or
     QbBflag == False) :
@@ -183,13 +185,13 @@ linesRead = 0
 try:
     BkSrc = open(QbSpath,"r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('File does not exist or not found')
     exit()
 else:
-    pass
+    logging.info('Source directory list has been opened.')
     
 for lines in BkSrc :
   baseDirect.append(lines.strip())
@@ -211,13 +213,13 @@ linesRead = 0
 try:
     BkExc = open(QbEpath,"r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('File does not exist or not found')
     exit()
 else:
-    pass
+    logging.info('Exclude directory list has been opened.')
     
 for lines in BkExc :
   baseExcept.append(lines.strip())
@@ -283,7 +285,7 @@ logging.info('Checking for the existence of target directories.')
 # make sure they all exist. If we get a FileNotFoundError we will go ahead and
 # create the target directory.
 #
-
+"""
 for TD in targetDirect :
     try :
       scandir(TD)
@@ -293,7 +295,7 @@ for TD in targetDirect :
       logging.info(logMessage)
 
 logging.info('Completed checking/creating target directories.')
-
+"""
 #
 # The following is the main loop for determining if an individual file needs
 # to be backed up. We do this by going through all of the source and matching
@@ -333,28 +335,67 @@ for sourcePointer in range(sourceTotal) :
           sdFlag = True
           seCounter += 1
 
-    if sdFlag :
-      try:
-        targetEntries = scandir(targetDirect[sourcePointer])
-      except NotADirectoryError :
-        pass
-      except PermissionError :
-        pass
-      else :
-        targetFile.clear()
-        targetPath.clear()
-        targetMtime.clear()
-        targetSize.clear()
-        for TE in targetEntries :
-          if TE.is_file() :
-            targetFile.append(TE.name)
-            targetPath.append(TE.path)
-            statVals = TE.stat()
-            targetMtime.append(statVals.st_mtime)
-            targetSize.append(statVals.st_size)
-            tdFlag = True
+    try:
+      targetEntries = scandir(targetDirect[sourcePointer])
+    except NotADirectoryError :
+      pass
+    except PermissionError :
+      pass
+    else :
+      teCounter = 0
+      targetFile.clear()
+      targetPath.clear()
+      targetMtime.clear()
+      targetSize.clear()
+      for TE in targetEntries :
+        if TE.is_file() :
+          targetFile.append(TE.name)
+          targetPath.append(TE.path)
+          statVals = TE.stat()
+          targetMtime.append(statVals.st_mtime)
+          targetSize.append(statVals.st_size)
+          tdFlag = True
+          teCounter += 1
+		  
+# If there are no entries in the source directory, then we can delete all the
+# entries in the target directory.
       
-      if sdFlag and not tdFlag :
+      if not sdFlag and tdFlag :
+
+# If there are no entries in both the source and target directories, we must
+# look for entries that are in the target but not the source and those entries
+# should be removed.
+      
+      if sdFlag and tdFlag :
+   
+    sourceEntries.close()
+    targetEntries.close()
+
+logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp)
+logging.info(logMessage)
+
+# Some simple logic to output a message about to size of the backups.
+
+unitStorage = 'Bytes'
+unitDivisor = 1
+
+if totalBytes != 0 :
+    if totalBytes > kiloBytes :
+      unitStorage = 'KiloBytes'
+      unitDivisor = kiloBytes
+    if totalBytes > megaBytes :
+      unitStorage = 'MegaBytes'
+      unitDivisor = megaBytes
+    if totalBytes > gigaBytes :
+      unitStorage = 'GigaBytes'
+      unitDivisor = gigaBytes
+    totalBytes = ceil(totalBytes / unitDivisor)
+
+logMessage = 'Total number of ' + unitStorage + ' backed up = ' + str(totalBytes)
+logging.info(logMessage)
+
+logging.info('Terminating program execution')
+"""
         for sfPointer in range(seCounter) :
           sourceFileEntry = sourcePath[sfPointer]
           splitSD = sourceFileEntry.split('\\',1)
@@ -403,33 +444,5 @@ for sourcePointer in range(sourceTotal) :
                   logging.info(logMessage)               
                   totalFilesBackedUp += 1
                   totalBytes += sourceSize[sfPointer]
-    
-    sourceEntries.close()
-    targetEntries.close()
-
-logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp)
-logging.info(logMessage)
-
-# Some simple logic to output a message about to size of the backups.
-
-unitStorage = 'Bytes'
-unitDivisor = 1
-
-if totalBytes != 0 :
-    if totalBytes > kiloBytes :
-      unitStorage = 'KiloBytes'
-      unitDivisor = kiloBytes
-    if totalBytes > megaBytes :
-      unitStorage = 'MegaBytes'
-      unitDivisor = megaBytes
-    if totalBytes > gigaBytes :
-      unitStorage = 'GigaBytes'
-      unitDivisor = gigaBytes
-    totalBytes = ceil(totalBytes / unitDivisor)
-
-logMessage = 'Total number of ' + unitStorage + ' backed up = ' + str(totalBytes)
-logging.info(logMessage)
-
-logging.info('Terminating program execution')
-    
+ """    
 exit()

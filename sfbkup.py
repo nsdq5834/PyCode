@@ -4,6 +4,7 @@
 # Version 1.02
 # Version 1.03
 # Version 1.04
+# Version 1.05
 
 # Look here for logging examples. 
 # https://docs.python.org/3/howto/logging-cookbook.html
@@ -67,6 +68,14 @@ def enum_directory(ed_tuple) :
           localFlag = enum_directory(localTuple)
           
       return True
+      
+def create_target_entry(source_entry) :
+
+    cteDrive = source_entry.split(':',1)
+    cteDirectory = source_entry.split('\\', 1)
+    cteFileEntry = QbBackupLoc + cteDrive[0] + '\\' + cteDirectory[1]
+    
+    return cteFileEntry
 
 # Define and initialize some constants and variables we will use.
 
@@ -266,16 +275,21 @@ sourceDirect.sort()
 
 logging.info('Source directory list has been sorted.')
 
-# Now create the list of target directories.
+# Now create the list of target directories. We will isolate the source drive
+# and the source directory and use that with the backup prefix to create the
+# name of the target directory(s). This would also two directories with the
+# name on different to be backed up to unique target directories.
 
 sourceTotal = 0
 
 for SD in sourceDirect :
-    splitSD = SD.split('\\', 1)
-    BD = QbBackupLoc + splitSD[1]
+#    splitDrive = SD.split(':',1)
+#    splitDirectory = SD.split('\\', 1)
+#    BD = QbBackupLoc + splitDrive[0] + '\\' + splitDirectory[1]
+    BD = create_target_entry(SD)
     targetDirect.append(BD)
-    sourceTotal += 1  
-
+    sourceTotal += 1
+    
 #targetTotal = sourceTotal
 
 logging.info('Target directory list has been built.')
@@ -360,8 +374,10 @@ for sourcePointer in range(sourceTotal) :
       if sdFlag and not tdFlag :
         for sfPointer in range(seCounter) :
           sourceFileEntry = sourcePath[sfPointer]
-          splitSD = sourceFileEntry.split('\\',1)
-          targetFileEntry = QbBackupLoc + splitSD[1]
+          targetFileEntry = create_target_entry(sourceFileEntry)
+#          splitDrive = sourceFileEntry.split(':',1)
+#          splitDirectory = sourceFileEntry.split('\\', 1)
+#          targetFileEntry = QbBackupLoc + splitDrive[0] + '\\' + splitDirectory[1]
           try :
             copy2(sourceFileEntry, targetFileEntry)
           except PermissionError :
@@ -379,8 +395,10 @@ for sourcePointer in range(sourceTotal) :
             tfPointer = targetFile.index(sourceFile[sfPointer])
           except ValueError :
             sourceFileEntry = sourcePath[sfPointer]
-            splitSD = sourceFileEntry.split('\\',1)
-            targetFileEntry = QbBackupLoc + splitSD[1]
+            targetFileEntry = create_target_entry(sourceFileEntry)
+#            splitDrive = sourceFileEntry.split(':',1)
+#            splitDirectory = sourceFileEntry.split('\\', 1)
+#            targetFileEntry = QbBackupLoc + splitDrive[0] + '\\' + splitDirectory[1]
             try :
               copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :
@@ -395,7 +413,7 @@ for sourcePointer in range(sourceTotal) :
             if ((sourceMtime[sfPointer] != targetMtime[tfPointer]) or
               (sourceSize[sfPointer] != targetSize[tfPointer])) :
                 sourceFileEntry = sourcePath[sfPointer]
-                targetFileEntry = targetPath[sfPointer]
+                targetFileEntry = targetPath[tfPointer]
                 try :
                   copy2(sourceFileEntry, targetFileEntry)
                 except PermissionError :
@@ -413,7 +431,7 @@ for sourcePointer in range(sourceTotal) :
 logMessage = 'Total number of files backed up = ' + str(totalFilesBackedUp)
 logging.info(logMessage)
 
-# Some simple logic to output a message about to size of the backups.
+# Some simple logic to output a message about the size of the backups.
 
 unitStorage = 'Bytes'
 unitDivisor = 1
@@ -436,3 +454,4 @@ logging.info(logMessage)
 logging.info('Terminating program execution')
     
 exit()
+# https://kycourts.gov/Expungement/Pages/process.aspx

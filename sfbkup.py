@@ -115,11 +115,16 @@ logFile = logPathBase + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
 
 # Create logging file with specific parameters.
 
-logging.basicConfig(filename=logFile,
-                   filemode='w',
-                   format='%(asctime)s %(module)s %(levelname)s %(message)s',
-                   datefmt='%m/%d/%Y %H:%M:%S',
-                   level=logging.DEBUG)
+try :
+    logging.basicConfig(filename=logFile,
+                        filemode='w',
+                        format='%(asctime)s %(module)s %(levelname)s %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.DEBUG)
+except FileNotFoundError :
+    exit()
+else :
+    pass
                    
 # Write opening line to our logger file.
                    
@@ -196,10 +201,10 @@ linesRead = 0
 try:
     BkSrc = open(QbSpath,"r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('File does not exist or not found')
     exit()
 else:
     pass
@@ -224,10 +229,10 @@ linesRead = 0
 try:
     BkExc = open(QbEpath,"r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('File does not exist or not found')
     exit()
 else:
     pass
@@ -284,9 +289,6 @@ logging.info('Source directory list has been sorted.')
 sourceTotal = 0
 
 for SD in sourceDirect :
-#    splitDrive = SD.split(':',1)
-#    splitDirectory = SD.split('\\', 1)
-#    BD = QbBackupLoc + splitDrive[0] + '\\' + splitDirectory[1]
     BD = create_target_entry(SD)
     targetDirect.append(BD)
     sourceTotal += 1
@@ -376,9 +378,6 @@ for sourcePointer in range(sourceTotal) :
         for sfPointer in range(seCounter) :
           sourceFileEntry = sourcePath[sfPointer]
           targetFileEntry = create_target_entry(sourceFileEntry)
-#          splitDrive = sourceFileEntry.split(':',1)
-#          splitDirectory = sourceFileEntry.split('\\', 1)
-#          targetFileEntry = QbBackupLoc + splitDrive[0] + '\\' + splitDirectory[1]
           try :
             copy2(sourceFileEntry, targetFileEntry)
           except PermissionError :
@@ -397,9 +396,6 @@ for sourcePointer in range(sourceTotal) :
           except ValueError :
             sourceFileEntry = sourcePath[sfPointer]
             targetFileEntry = create_target_entry(sourceFileEntry)
-#            splitDrive = sourceFileEntry.split(':',1)
-#            splitDirectory = sourceFileEntry.split('\\', 1)
-#            targetFileEntry = QbBackupLoc + splitDrive[0] + '\\' + splitDirectory[1]
             try :
               copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :

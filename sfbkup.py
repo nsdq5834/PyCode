@@ -46,7 +46,7 @@ import logging
 # subdirectories, but I have started with this method as I am trying to learn
 # Python.
 #
-# Note that were calling the routine recusively.
+# Note that we're calling the routine recusively.
     
 def enum_directory(ed_tuple) :
 
@@ -66,7 +66,8 @@ def enum_directory(ed_tuple) :
         if localEntry.is_dir():         
           localTuple = (sdList, localEntry.path)
           localFlag = enum_directory(localTuple)
-          
+
+      localDirectory.close()          
       return True
       
 def create_target_entry(source_entry) :

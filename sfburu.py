@@ -13,7 +13,7 @@
 # The program is invoked with a single parameter which provides the base
 # location for the logging file.
 #
-# Example  C:\sfbkup D:\Logs\
+# Example  C:\sfburu D:\Logs\
 
 # Copy in needed support code
 
@@ -62,7 +62,8 @@ def enum_directory(ed_tuple) :
         if localEntry.is_dir():         
           localTuple = (sdList, localEntry.path)
           localFlag = enum_directory(localTuple)
-          
+ 
+      localDirectory.close() 
       return True
 
 # Define and initialize some constants and variables we will use.
@@ -102,12 +103,18 @@ logFile = logPathBase + rightNow.strftime("%Y%m%d_%H%M%S") + ".log"
 
 # Create logging file with specific parameters.
 
-logging.basicConfig(filename=logFile,
-                   filemode='w',
-                   format='%(asctime)s %(module)s %(levelname)s %(message)s',
-                   datefmt='%m/%d/%Y %H:%M:%S',
-                   level=logging.DEBUG)
-                   
+try :
+    logging.basicConfig(filename=logFile,
+                        filemode='w',
+                        format='%(asctime)s %(module)s %(levelname)s %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.DEBUG)
+except FileNotFoundError :
+    logging.error('Logging file directory not found')
+    exit()
+else :
+    pass
+
 # Write opening line to our logger file.
                    
 logging.info('Begin program execution')
@@ -129,7 +136,7 @@ else:
 # parameters we need. We set the recursion limit before we read the parm
 # file. Use a simple if ladder to isolate our parameters.
 
-recursionLimit = 5000
+recursionLimit = 10000
 
 for lines in parmFile:
 
@@ -154,12 +161,19 @@ for lines in parmFile:
   
 parmFile.close()
 
-# Trivial test to make sure we have the four parameters we need.
+# Trivial test to make sure we have the three parameters we need.
 
-if (QbEflag == False or QbSflag == False or
-    QbBflag == False) :
-      logging.error('Parameter error in a parm file record.')
-      exit()
+if QbSflag == False :
+    logging.error('BackupSource parameter not found! Review parm file.')
+	exit()
+	
+if QbEflag == False :
+    logging.error('ExcludeSource parameter not found! Review parm file.')
+	exit()
+	
+if QbBflag == False :
+    logging.error('BackupBaseLocation parameter not found! Review parm file.')
+	exit()
 
 logging.info('Parameter file has been read and processed')
 
@@ -183,10 +197,10 @@ linesRead = 0
 try:
     BkSrc = open(QbSpath,"r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error! Unable to red backup source file')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('File does not exist or not found! Backup source file.')
     exit()
 else:
     pass
@@ -211,10 +225,10 @@ linesRead = 0
 try:
     BkExc = open(QbEpath,"r",1)
 except PermissionError:
-    print('Access permission error')
+    logging.error('Access permission error! Exclude list file.')
     exit()
 except FileNotFoundError:
-    print('File does not exist or not found')
+    logging.error('File does not exist or not found! Exclude list file.')
     exit()
 else:
     pass
@@ -258,6 +272,11 @@ for ED in baseExcept :
 
 logMessage = 'Total number of directories to process = ' + str(len(sourceDirect))
 logging.info(logMessage)
+
+#
+# Need to consider the case where an entire directory has been deleted on
+# the source side.
+#
 
 sourceDirect.sort()
 

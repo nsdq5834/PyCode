@@ -20,11 +20,13 @@
 from os import *
 from sys import setrecursionlimit, argv
 from io import open
-from shutil import copy2
+from shutil import copy2, rmtree
 from filecmp import dircmp
 from datetime import datetime
 from math import ceil
+import stat
 import logging
+import win32con, win32api
 
 # enum_directory is a simple funtion that is used to locate and save
 # directory entries.
@@ -42,6 +44,8 @@ import logging
 # subdirectories, but I have started with this method as I am trying to learn
 # Python.
 #
+# https://bitpaper.blogspot.com/2013/05/python-changing-file-attributes-on.html
+# 
 # Note that were calling the routine recusively.
     
 def enum_directory(ed_tuple) :
@@ -65,6 +69,32 @@ def enum_directory(ed_tuple) :
  
       localDirectory.close() 
       return True
+      
+# Copied this code from:
+# https://stackoverflow.com/questions/303200/how-do-i-remove-delete-a-folder-that-is-not-empty
+# It gets called when we are trying to remove a folder/directory that are
+# not empty.
+
+def remove_readonly(func, path, _) :
+    "Clear the readonly bit and reattempt the removal"
+    chmod(path, stat.S_IWRITE)
+    func(path)
+
+"""
+def alter_file_ownership(currentFile) :
+
+    userx, domain, type = win32security.LookupAccountName ("", "Bill")
+#    usery, domain, type = win32security.LookupAccountName ("", "User Y")
+
+    sd = win32security.GetFileSecurity(FILENAME, win32security.DACL_SECURITY_INFORMATION)
+    dacl = sd.GetSecurityDescriptorDacl()   # instead of dacl = win32security.ACL()
+
+#    dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE, userx)
+    dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, userx)
+
+    sd.SetSecurityDescriptorDacl(1, dacl, 0)   # may not be necessary
+    win32security.SetFileSecurity(FILENAME, win32security.DACL_SECURITY_INFORMATION, sd)
+"""
 
 # Define and initialize some constants and variables we will use.
 
@@ -165,15 +195,15 @@ parmFile.close()
 
 if QbSflag == False :
     logging.error('BackupSource parameter not found! Review parm file.')
-	exit()
-	
+    exit()
+    
 if QbEflag == False :
     logging.error('ExcludeSource parameter not found! Review parm file.')
-	exit()
-	
+    exit()
+    
 if QbBflag == False :
     logging.error('BackupBaseLocation parameter not found! Review parm file.')
-	exit()
+    exit()
 
 logging.info('Parameter file has been read and processed')
 
@@ -184,7 +214,44 @@ setrecursionlimit(recursionLimit)
 logMessage = 'Recursion limit has been set to ' + str(recursionLimit)
 logging.info(logMessage)
   
-logging.info('Processing records from source directory file.')
+logging.info('Processing target directories.')
+
+# First action we need to do is delete any directories in the backup location
+# that are no longer in the source. We will need to enumerate all of the backup
+# directories and then compare back to the source directories.
+
+myTuple = (sourceDirect, QbBackupLoc)
+EnumFlag = enum_directory(myTuple)
+
+# Sort the list in decending order.
+
+sourceDirect.sort(reverse=True)
+
+logging.info('Target directory list built and sorted.')
+
+# Loop through all entries and determine in the source directory still exists.
+# If it does not, then we will try to delete it. We will take the full name of
+# backup directory and isolate the original source directory from it.
+
+# Need the length to manipulate the directory string.
+
+# We will try to use the rmtree to remove a folder/directory. If we encounter
+# an error then we call the remove_readonly function.
+
+lenQbBackupLoc = len(QbBackupLoc)
+
+for TD in sourceDirect :
+    lenTD = len(TD)
+    myTD = TD[lenQbBackupLoc:lenQbBackupLoc+1] + ":" + TD[lenQbBackupLoc+1:lenTD] 
+
+    if not path.isdir(myTD) :
+      logMessage = "Attempting deletion of " + TD
+      logging.info(logMessage)
+      rmtree(TD, onerror=remove_readonly)
+      logMessage = TD + " has been removed"
+      logging.info(logMessage)
+
+exit()
 
 #
 # Next we will process the source directory file. This file contains the base

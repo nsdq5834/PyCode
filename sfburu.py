@@ -71,30 +71,25 @@ def enum_directory(ed_tuple) :
       return True
       
 # Copied this code from:
-# https://stackoverflow.com/questions/303200/how-do-i-remove-delete-a-folder-that-is-not-empty
-# It gets called when we are trying to remove a folder/directory that are
-# not empty.
+# http://timgolden.me.uk/pywin32-docs/Recursive_directory_deletes_and_special_files.html
+# We call it to remove a directory. It will delete all files and subdirectories
+# and then remove the directory. I changed the variable names but the logic is from
+# Tim Golden. Very nice piece of code. Need to be careful that we never ever pass it
+# a root directory.
 
-def remove_readonly(func, path, _) :
-    "Clear the readonly bit and reattempt the removal"
-    chmod(path, stat.S_IWRITE)
-    func(path)
-
-"""
-def alter_file_ownership(currentFile) :
-
-    userx, domain, type = win32security.LookupAccountName ("", "Bill")
-#    usery, domain, type = win32security.LookupAccountName ("", "User Y")
-
-    sd = win32security.GetFileSecurity(FILENAME, win32security.DACL_SECURITY_INFORMATION)
-    dacl = sd.GetSecurityDescriptorDacl()   # instead of dacl = win32security.ACL()
-
-#    dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE, userx)
-    dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, userx)
-
-    sd.SetSecurityDescriptorDacl(1, dacl, 0)   # may not be necessary
-    win32security.SetFileSecurity(FILENAME, win32security.DACL_SECURITY_INFORMATION, sd)
-"""
+def delete_directory(currrentDirectory):
+    for currentFile in os.listdir(currrentDirectory):
+        file_or_directory = os.path.join(currrentDirectory,currentFile)
+        print(file_or_dir)
+        if os.path.isdir(file_or_directory) and not os.path.islink(file_or_directory):
+            del_dir(file_or_directory)
+        else:
+            try:
+                os.remove(file_or_directory)
+            except:
+                win32api.SetFileAttributes(file_or_directory, win32con.FILE_ATTRIBUTE_NORMAL)
+                os.remove(file_or_directory)
+    os.rmdir(currrentDirectory)
 
 # Define and initialize some constants and variables we will use.
 
@@ -243,11 +238,12 @@ lenQbBackupLoc = len(QbBackupLoc)
 for TD in sourceDirect :
     lenTD = len(TD)
     myTD = TD[lenQbBackupLoc:lenQbBackupLoc+1] + ":" + TD[lenQbBackupLoc+1:lenTD] 
-
+    logMessage = myTD + " >--< " + TD
+    logging.info(logMessage)
     if not path.isdir(myTD) :
-      logMessage = "Attempting deletion of " + TD
+      logMessage = myTD + " <--> " + TD
       logging.info(logMessage)
-      rmtree(TD, onerror=remove_readonly)
+#      delete_directory(TD)
       logMessage = TD + " has been removed"
       logging.info(logMessage)
 

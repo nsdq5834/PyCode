@@ -5,6 +5,7 @@
 # Version 1.03
 # Version 1.04
 # Version 1.05
+# Version 1.06
 
 # Look here for logging examples. 
 # https://docs.python.org/3/howto/logging-cookbook.html
@@ -29,6 +30,7 @@ from filecmp import dircmp
 from datetime import datetime
 from math import ceil
 import logging
+
 
 # enum_directory is a simple funtion that is used to locate and save
 # directory entries.
@@ -77,7 +79,47 @@ def create_target_entry(source_entry) :
     cteFileEntry = QbBackupLoc + cteDrive[0] + '\\' + cteDirectory[1]
     
     return cteFileEntry
+"""    
+def create_directory(dir_entry) :
 
+    folders = []
+    drive, path = os.path.splitdrive(dir_entry)
+    
+    print(drive, " <--> ", path)
+    exit()
+
+    while 1:
+        path, folder = os.path.split(path)
+        print(path," <--> ",folder)
+        
+        if folder != "":
+          folders.append(folder)
+        else:
+          if path != "":
+            folders.append(path)
+          break       
+    
+    num_elements = len(folders)
+    print(num_elements)
+    folders.reverse()
+    new_directory = folders[0] + folders[1]
+    
+    try :
+      mkdir(new_directory)
+    except PermissionError :
+      pass
+    except FileExistsError :
+      pass
+    
+    for j in range(2,num_elements) :
+      new_directory = new_directory + '\\' + folders[j]
+      try :
+        mkdir(new_directory)
+      except PermissionError :
+        pass
+      except FileExistsError :
+        pass
+"""
 # Define and initialize some constants and variables we will use.
 
 kiloBytes = 1024
@@ -304,6 +346,7 @@ logging.info('Checking for the existence of target directories.')
 # create the target directory.
 #
 
+"""
 for TD in targetDirect :
     try :
       scandir(TD)
@@ -311,8 +354,30 @@ for TD in targetDirect :
       mkdir(TD)
       logMessage = 'Directory created = ' + TD
       logging.info(logMessage)
+"""
+
+# We sort the directory list in decending order so that we can for the
+# existence of the lowest level first. This helps us deal with a situation
+# like the following.
+#
+# Drive:\A\B\C\D does not exist, and C does not exist either. the makedirs
+# function will create the full path for us creating any missing levels.
+
+targetDirect.sort(reverse=True) 
+
+numberTD = len(targetDirect) - 1
+
+for pointerTD in range(0,numberTD) :
+    if not path.exists(targetDirect[pointerTD]) :
+      makedirs(targetDirect[pointerTD])
 
 logging.info('Completed checking/creating target directories.')
+
+#
+# Put the directory list back in original order so that it matches sourceDirect
+#
+
+targetDirect.sort()
 
 #
 # The following is the main loop for determining if an individual file needs
@@ -383,6 +448,9 @@ for sourcePointer in range(sourceTotal) :
           except PermissionError :
             logMessage = 'PermissionError --> ' + sourceFileEntry
             logging.error(logMessage)
+          except FileNotFoundError :
+            logMessage = 'FileNotFoundError --> ' + targetFileEntry
+            logging.error(logMessage)
           else :
             logMessage = 'Backing up --> ' + sourceFileEntry
             logging.info(logMessage)
@@ -396,10 +464,16 @@ for sourcePointer in range(sourceTotal) :
           except ValueError :
             sourceFileEntry = sourcePath[sfPointer]
             targetFileEntry = create_target_entry(sourceFileEntry)
+#            print("ValueError encountered on index lookup")
+#            print("SF = ", sourceFileEntry)
+#            print("TF = ", targetFileEntry)
             try :
               copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :
               logMessage = 'PermissionError --> ' + sourceFileEntry
+              logging.error(logMessage)
+            except FileNotFoundError :
+              logMessage = 'FileNotFoundError --> ' + targetFileEntry
               logging.error(logMessage)
             else :
               logMessage = 'Backing up --> ' + sourceFileEntry

@@ -25,7 +25,7 @@
 from os import *
 from sys import setrecursionlimit, argv
 from io import open
-from shutil import copy2
+from shutil import copy2, copyfile, copystat
 from filecmp import dircmp
 from datetime import datetime
 from math import ceil
@@ -444,7 +444,7 @@ for sourcePointer in range(sourceTotal) :
           sourceFileEntry = sourcePath[sfPointer]
           targetFileEntry = create_target_entry(sourceFileEntry)
           try :
-            copy2(sourceFileEntry, targetFileEntry)
+            copyfile(sourceFileEntry, targetFileEntry)
           except PermissionError :
             logMessage = 'PermissionError --> ' + sourceFileEntry
             logging.error(logMessage)
@@ -452,6 +452,7 @@ for sourcePointer in range(sourceTotal) :
             logMessage = 'FileNotFoundError --> ' + targetFileEntry
             logging.error(logMessage)
           else :
+            copystat(sourceFileEntry, targetFileEntry)
             logMessage = 'Backing up --> ' + sourceFileEntry
             logging.info(logMessage)
             totalFilesBackedUp += 1
@@ -468,7 +469,7 @@ for sourcePointer in range(sourceTotal) :
 #            print("SF = ", sourceFileEntry)
 #            print("TF = ", targetFileEntry)
             try :
-              copy2(sourceFileEntry, targetFileEntry)
+              copyfile(sourceFileEntry, targetFileEntry)
             except PermissionError :
               logMessage = 'PermissionError --> ' + sourceFileEntry
               logging.error(logMessage)
@@ -476,6 +477,7 @@ for sourcePointer in range(sourceTotal) :
               logMessage = 'FileNotFoundError --> ' + targetFileEntry
               logging.error(logMessage)
             else :
+              copystat(sourceFileEntry, targetFileEntry)
               logMessage = 'Backing up --> ' + sourceFileEntry
               logging.info(logMessage)               
               totalFilesBackedUp += 1
@@ -486,11 +488,12 @@ for sourcePointer in range(sourceTotal) :
                 sourceFileEntry = sourcePath[sfPointer]
                 targetFileEntry = targetPath[tfPointer]
                 try :
-                  copy2(sourceFileEntry, targetFileEntry)
+                  copyfile(sourceFileEntry, targetFileEntry)
                 except PermissionError :
                   logMessage = 'PermissionError --> ' + sourceFileEntry
                   logging.error(logMessage)
                 else :
+                  copystat(sourceFileEntry, targetFileEntry)
                   logMessage = 'Backing up --> ' + sourceFileEntry
                   logging.info(logMessage)               
                   totalFilesBackedUp += 1

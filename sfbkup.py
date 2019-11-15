@@ -444,7 +444,7 @@ for sourcePointer in range(sourceTotal) :
           sourceFileEntry = sourcePath[sfPointer]
           targetFileEntry = create_target_entry(sourceFileEntry)
           try :
-            copyfile(sourceFileEntry, targetFileEntry)
+            copy2(sourceFileEntry, targetFileEntry)
           except PermissionError :
             logMessage = 'PermissionError --> ' + sourceFileEntry
             logging.error(logMessage)
@@ -452,7 +452,7 @@ for sourcePointer in range(sourceTotal) :
             logMessage = 'FileNotFoundError --> ' + targetFileEntry
             logging.error(logMessage)
           else :
-            copystat(sourceFileEntry, targetFileEntry)
+#            copystat(sourceFileEntry, targetFileEntry)
             logMessage = 'Backing up --> ' + sourceFileEntry
             logging.info(logMessage)
             totalFilesBackedUp += 1
@@ -469,7 +469,7 @@ for sourcePointer in range(sourceTotal) :
 #            print("SF = ", sourceFileEntry)
 #            print("TF = ", targetFileEntry)
             try :
-              copyfile(sourceFileEntry, targetFileEntry)
+              copy2(sourceFileEntry, targetFileEntry)
             except PermissionError :
               logMessage = 'PermissionError --> ' + sourceFileEntry
               logging.error(logMessage)
@@ -477,7 +477,7 @@ for sourcePointer in range(sourceTotal) :
               logMessage = 'FileNotFoundError --> ' + targetFileEntry
               logging.error(logMessage)
             else :
-              copystat(sourceFileEntry, targetFileEntry)
+#              copystat(sourceFileEntry, targetFileEntry)
               logMessage = 'Backing up --> ' + sourceFileEntry
               logging.info(logMessage)               
               totalFilesBackedUp += 1
@@ -488,12 +488,12 @@ for sourcePointer in range(sourceTotal) :
                 sourceFileEntry = sourcePath[sfPointer]
                 targetFileEntry = targetPath[tfPointer]
                 try :
-                  copyfile(sourceFileEntry, targetFileEntry)
+                  copy2(sourceFileEntry, targetFileEntry)
                 except PermissionError :
                   logMessage = 'PermissionError --> ' + sourceFileEntry
                   logging.error(logMessage)
                 else :
-                  copystat(sourceFileEntry, targetFileEntry)
+#                  copystat(sourceFileEntry, targetFileEntry)
                   logMessage = 'Backing up --> ' + sourceFileEntry
                   logging.info(logMessage)               
                   totalFilesBackedUp += 1

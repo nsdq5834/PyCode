@@ -25,6 +25,7 @@
 from os import *
 from sys import setrecursionlimit, argv
 from io import open
+import subprocess
 from shutil import copy2, copyfile, copystat
 from filecmp import dircmp
 from datetime import datetime
@@ -79,47 +80,7 @@ def create_target_entry(source_entry) :
     cteFileEntry = QbBackupLoc + cteDrive[0] + '\\' + cteDirectory[1]
     
     return cteFileEntry
-"""    
-def create_directory(dir_entry) :
 
-    folders = []
-    drive, path = os.path.splitdrive(dir_entry)
-    
-    print(drive, " <--> ", path)
-    exit()
-
-    while 1:
-        path, folder = os.path.split(path)
-        print(path," <--> ",folder)
-        
-        if folder != "":
-          folders.append(folder)
-        else:
-          if path != "":
-            folders.append(path)
-          break       
-    
-    num_elements = len(folders)
-    print(num_elements)
-    folders.reverse()
-    new_directory = folders[0] + folders[1]
-    
-    try :
-      mkdir(new_directory)
-    except PermissionError :
-      pass
-    except FileExistsError :
-      pass
-    
-    for j in range(2,num_elements) :
-      new_directory = new_directory + '\\' + folders[j]
-      try :
-        mkdir(new_directory)
-      except PermissionError :
-        pass
-      except FileExistsError :
-        pass
-"""
 # Define and initialize some constants and variables we will use.
 
 kiloBytes = 1024
@@ -340,22 +301,6 @@ for SD in sourceDirect :
 logging.info('Target directory list has been built.')
 logging.info('Checking for the existence of target directories.')
 
-#
-# Next we will iterate through the list of target directories directories to
-# make sure they all exist. If we get a FileNotFoundError we will go ahead and
-# create the target directory.
-#
-
-"""
-for TD in targetDirect :
-    try :
-      scandir(TD)
-    except FileNotFoundError :
-      mkdir(TD)
-      logMessage = 'Directory created = ' + TD
-      logging.info(logMessage)
-"""
-
 # We sort the directory list in decending order so that we can for the
 # existence of the lowest level first. This helps us deal with a situation
 # like the following.
@@ -444,16 +389,15 @@ for sourcePointer in range(sourceTotal) :
           sourceFileEntry = sourcePath[sfPointer]
           targetFileEntry = create_target_entry(sourceFileEntry)
           try :
-            copy2(sourceFileEntry, targetFileEntry)
-          except PermissionError :
-            logMessage = 'PermissionError --> ' + sourceFileEntry
-            logging.error(logMessage)
-          except FileNotFoundError :
-            logMessage = 'FileNotFoundError --> ' + targetFileEntry
-            logging.error(logMessage)
+            copyCmd = subprocess.run(['copy',sourceFileEntry,targetFileEntry],
+             check=True, shell=True, capture_output=True)
+          except subprocess.CalledProcessError as copyError :
+             logMessage = sourceFileEntry + '-->'
+             logging.error(logMessage)
           else :
-#            copystat(sourceFileEntry, targetFileEntry)
-            logMessage = 'Backing up --> ' + sourceFileEntry
+            copystat(sourceFileEntry, targetFileEntry)
+            logMessage = 'Backing up -- ' + str(copyCmd.returncode)
+            logMessage = logMessage + ' --> ' + sourceFileEntry
             logging.info(logMessage)
             totalFilesBackedUp += 1
             totalBytes += sourceSize[sfPointer]
@@ -465,20 +409,17 @@ for sourcePointer in range(sourceTotal) :
           except ValueError :
             sourceFileEntry = sourcePath[sfPointer]
             targetFileEntry = create_target_entry(sourceFileEntry)
-#            print("ValueError encountered on index lookup")
-#            print("SF = ", sourceFileEntry)
-#            print("TF = ", targetFileEntry)
+            myCopy = "Copy " + sourceFileEntry + " " + targetFileEntry
             try :
-              copy2(sourceFileEntry, targetFileEntry)
-            except PermissionError :
-              logMessage = 'PermissionError --> ' + sourceFileEntry
-              logging.error(logMessage)
-            except FileNotFoundError :
-              logMessage = 'FileNotFoundError --> ' + targetFileEntry
-              logging.error(logMessage)
+              copyCmd = subprocess.run(['copy',sourceFileEntry,targetFileEntry],
+                check=True, shell=True, capture_output=True)
+            except subprocess.CalledProcessError as copyError :
+               logMessage = sourceFileEntry + '-->'
+               logging.error(logMessage)
             else :
-#              copystat(sourceFileEntry, targetFileEntry)
-              logMessage = 'Backing up --> ' + sourceFileEntry
+              copystat(sourceFileEntry, targetFileEntry)
+              logMessage = 'Backing up -- ' + str(copyCmd.returncode)
+              logMessage = logMessage + ' --> ' + sourceFileEntry
               logging.info(logMessage)               
               totalFilesBackedUp += 1
               totalBytes += sourceSize[sfPointer]
@@ -487,14 +428,17 @@ for sourcePointer in range(sourceTotal) :
               (sourceSize[sfPointer] != targetSize[tfPointer])) :
                 sourceFileEntry = sourcePath[sfPointer]
                 targetFileEntry = targetPath[tfPointer]
+                myCopy = "Copy " + sourceFileEntry + " " + targetFileEntry
                 try :
-                  copy2(sourceFileEntry, targetFileEntry)
-                except PermissionError :
-                  logMessage = 'PermissionError --> ' + sourceFileEntry
-                  logging.error(logMessage)
+                  copyCmd = subprocess.run(['copy',sourceFileEntry,targetFileEntry],
+                   check=True, shell=True, capture_output=True)
+                except subprocess.CalledProcessError as copyError :
+                   logMessage = sourceFileEntry + '-->'
+                   logging.error(logMessage)
                 else :
-#                  copystat(sourceFileEntry, targetFileEntry)
-                  logMessage = 'Backing up --> ' + sourceFileEntry
+                  copystat(sourceFileEntry, targetFileEntry)
+                  logMessage = 'Backing up -- ' + str(copyCmd.returncode)
+                  logMessage = logMessage + ' --> ' + sourceFileEntry
                   logging.info(logMessage)               
                   totalFilesBackedUp += 1
                   totalBytes += sourceSize[sfPointer]

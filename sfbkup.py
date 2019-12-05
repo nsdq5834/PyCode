@@ -383,21 +383,34 @@ for sourcePointer in range(sourceTotal) :
             targetMtime.append(statVals.st_mtime)
             targetSize.append(statVals.st_size)
             tdFlag = True
+
+# Note for self. Having issues with copying Thunderbird mail files. Files were
+# being copied, but then access date and time were being modified to the cre-
+# ation date and time as oppesed to the original time. This forced a swith to
+# using the Windows Copy command vs. shutil.copy2. Additional problem was en-
+# countered because Copy cannot copy hidden or system files. Now we try to stat
+# the file first. If stat is successful, we can use the Copy command. If it 
+# fails we will try to use the xcopy program with the /h switch to perform the
+# copy.
+
+# Run the following code block if a file exists in the source directory/folder
+# but not in the destination directory/folder.
       
       if sdFlag and not tdFlag :
         for sfPointer in range(seCounter) :
-          sourceFileEntry = sourcePath[sfPointer]
-          targetFileEntry = create_target_entry(sourceFileEntry)
+          sourceFileEntry = '"' + sourcePath[sfPointer] + '"'
+          targetFileEntry = '"' + create_target_entry(sourceFileEntry) + '"'
           try :
             copyCmd = subprocess.run(['copy',sourceFileEntry,targetFileEntry],
-             check=True, shell=True, capture_output=True)
+             check=True, shell=True, text=True, capture_output=True)
           except subprocess.CalledProcessError as copyError :
-             logMessage = sourceFileEntry + '-->'
+             logMessage = 'Copy RC=' + str(copyError.returncode) + ' ' + sourceFileEntry
+             logMessage = logMessage + ' ' + copyError.stderr
              logging.error(logMessage)
           else :
             copystat(sourceFileEntry, targetFileEntry)
-            logMessage = 'Backing up -- ' + str(copyCmd.returncode)
-            logMessage = logMessage + ' --> ' + sourceFileEntry
+            logMessage = 'Copy RC=' + str(copyCmd.returncode)
+            logMessage = logMessage + ' ' + sourceFileEntry
             logging.info(logMessage)
             totalFilesBackedUp += 1
             totalBytes += sourceSize[sfPointer]
@@ -412,14 +425,15 @@ for sourcePointer in range(sourceTotal) :
             myCopy = "Copy " + sourceFileEntry + " " + targetFileEntry
             try :
               copyCmd = subprocess.run(['copy',sourceFileEntry,targetFileEntry],
-                check=True, shell=True, capture_output=True)
+                check=True, shell=True, text=True, capture_output=True)
             except subprocess.CalledProcessError as copyError :
-               logMessage = sourceFileEntry + '-->'
+               logMessage = 'Copy RC=' + str(copyError.returncode) + ' ' + sourceFileEntry
+               logMessage = logMessage + ' ' + copyError.stderr
                logging.error(logMessage)
             else :
               copystat(sourceFileEntry, targetFileEntry)
-              logMessage = 'Backing up -- ' + str(copyCmd.returncode)
-              logMessage = logMessage + ' --> ' + sourceFileEntry
+              logMessage = 'Copy RC=' + str(copyCmd.returncode)
+              logMessage = logMessage + ' ' + sourceFileEntry
               logging.info(logMessage)               
               totalFilesBackedUp += 1
               totalBytes += sourceSize[sfPointer]
@@ -431,14 +445,15 @@ for sourcePointer in range(sourceTotal) :
                 myCopy = "Copy " + sourceFileEntry + " " + targetFileEntry
                 try :
                   copyCmd = subprocess.run(['copy',sourceFileEntry,targetFileEntry],
-                   check=True, shell=True, capture_output=True)
+                   check=True, shell=True, text=True, capture_output=True)
                 except subprocess.CalledProcessError as copyError :
-                   logMessage = sourceFileEntry + '-->'
+                   logMessage = 'Copy RC=' + str(copyError.returncode) + ' ' + sourceFileEntry
+                   logMessage = logMessage = ' ' + copyError.stderr
                    logging.error(logMessage)
                 else :
                   copystat(sourceFileEntry, targetFileEntry)
-                  logMessage = 'Backing up -- ' + str(copyCmd.returncode)
-                  logMessage = logMessage + ' --> ' + sourceFileEntry
+                  logMessage = 'Copy RC=' + str(copyCmd.returncode)
+                  logMessage = logMessage + ' ' + sourceFileEntry
                   logging.info(logMessage)               
                   totalFilesBackedUp += 1
                   totalBytes += sourceSize[sfPointer]
